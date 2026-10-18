@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Touch
-import SolidGridHam.Cycle.Stacked
+module
+
+public import SolidGridHam.Cycle.Touch
+public import SolidGridHam.Cycle.Stacked
+
+@[expose] public section
 
 /-!
 # Geometry for the near lemma

@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.CostConn
+module
+
+public import SolidGridHam.Cycle.CostConn
+
+@[expose] public section
 
 /-!
 # Running time, part 4: the starting 2-factor

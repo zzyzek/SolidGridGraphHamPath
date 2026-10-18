@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.CostConn
-import SolidGridHam.Path.FindFactor
+module
+
+public import SolidGridHam.Cycle.CostConn
+public import SolidGridHam.Path.FindFactor
+
+@[expose] public section
 
 /-!
 # Running time of the d-factor algorithm (the starting path-factor)

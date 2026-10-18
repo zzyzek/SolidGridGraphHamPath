@@ -2,8 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Run
-import SolidGridHam.Path.StuckL4
+module
+
+public import SolidGridHam.Path.Run
+public import SolidGridHam.Path.StuckL4
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Sheffield's phase: bridges
@@ -26,16 +31,7 @@ namespace HP
 
 open Finset Classical
 
-structure Bridge where
-  q : Pt
-  a : Side
-  r : ℕ
-
 namespace Bridge
-
-def cell (b : Bridge) (j : ℕ) : Pt := cellJ b.q b.a j
-
-def E (b : Bridge) : Pt := b.cell (b.r - 1)
 
 end Bridge
 

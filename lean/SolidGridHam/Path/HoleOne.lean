@@ -2,8 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleTwo
-import SolidGridHam.Path.HoleTryCost
+module
+
+public import SolidGridHam.Path.HoleTwo
+public import SolidGridHam.Path.HoleTryCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # An inner endpoint, the other dangling: decided
@@ -19,11 +24,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
--- The box of a set connected by a Hamiltonian path is narrow (`narrow_of_ncomp`).
---
-def isNarrow (U : Finset Pt) : Bool :=
-  decide (bx1 U - bx0 U < U.card) && decide (by1 U - by0 U < U.card)
 
 def hpI1 (V : Finset Pt) (s t : Pt) : Bool :=
   (nbrsL t).any fun x => decide (x.1 ∈ V) && decide (x.1 ≠ s) && isNarrow (V.erase t) &&

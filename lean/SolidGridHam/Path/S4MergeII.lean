@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.S4Merge
+module
+
+public import SolidGridHam.Path.S4Merge
+
+@[expose] public section
 
 /-!
 # Theorem II for a merging cell (docs/S4_RESIDUAL.md §0, §4)

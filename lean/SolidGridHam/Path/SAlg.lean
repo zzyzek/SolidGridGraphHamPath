@@ -2,10 +2,15 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.PhaseCount
-import SolidGridHam.Path.Cert
-import SolidGridHam.Path.Prelim.NotchPF
-import SolidGridHam.Cycle.Algorithm
+module
+
+public import SolidGridHam.Path.PhaseCount
+public import SolidGridHam.Path.Cert
+public import SolidGridHam.Path.Prelim.NotchPF
+public import SolidGridHam.Cycle.Algorithm
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Sheffield's phase, decided
@@ -28,9 +33,6 @@ section salg
 
 variable {V W : Finset Pt} {H : Finset Edge}
 
-def cutB (W : Finset Pt) (H : Finset Edge) (c : Pt) : Bool :=
-  !(connB W H c (c.1 + 1, c.2) && connB W H c (c.1 + 1, c.2 + 1) && connB W H c (c.1, c.2 + 1))
-
 lemma cutB_iff (hVW : V ⊆ W) (hHW : Inside W H) {c : Pt} (hc : IsCell V c) :
     cutB W H c = true ↔ CutSq H c := by
   obtain ⟨h1, h2, h3, h4⟩ := hc
@@ -39,9 +41,6 @@ lemma cutB_iff (hVW : V ⊆ W) (hHW : Inside W H) {c : Pt} (hc : IsCell V c) :
   simp only [Bool.and_eq_true]
   rw [connB_iff hHW (hVW h1) (hVW h2), connB_iff hHW (hVW h1) (hVW h4),
     connB_iff hHW (hVW h1) (hVW h3), and_assoc]
-
-def pairSqB (BS : List Bridge) (c : Pt) : Bool :=
-  BS.any fun b => decide (c = b.cell (b.r - 2)) || decide (c = b.E)
 
 lemma pairSqB_iff {BS : List Bridge} {c : Pt} :
     pairSqB BS c = true ↔ ∃ b ∈ BS, c = b.cell (b.r - 2) ∨ c = b.E := by
@@ -103,14 +102,6 @@ def bridgeSqB (BS : List Bridge) (q : Pt) : Bool :=
 lemma bridgeSqB_iff {BS : List Bridge} {q : Pt} : bridgeSqB BS q = true ↔ BridgeSq BS q := by
   unfold bridgeSqB BridgeSq
   simp [List.any_eq_true]
-
--- How a run from a critical square ends: it turns after `r` squares (a row), or meets a
--- non-cell or a cut square at index `k` (stuck).
---
-inductive RunEnd
-  | row (r : ℕ)
-  | stuck (k : ℕ)
-  deriving DecidableEq
 
 def scanAux (V W : Finset Pt) (H : Finset Edge) (q : Pt) (a : Side) (o : Bool) :
     ℕ → ℕ → Option RunEnd

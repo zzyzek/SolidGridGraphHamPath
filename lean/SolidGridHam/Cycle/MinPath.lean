@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import Mathlib
+module
+
+public import Mathlib
+
+@[expose] public section
 
 /-!
 # Minimum-weight path search (Bellman–Ford on tails)
@@ -552,7 +556,8 @@ in the middle, weight `10` at node `2` and `1` elsewhere. The lightest path is
 `[0, 1, 3, 4]` (weight `4`).
 -/
 
-#eval minPath (Finset.range 5) (fun x => x == 0) (fun _ => true) (fun x => x == 4)
-  (fun x y => (y == x + 1) || (y == x + 2)) (fun x => if x == 2 then 10 else 1)
+-- Example (run in a scratch file that imports `SolidGridHam`):
+-- #eval minPath (Finset.range 5) (fun x => x == 0) (fun _ => true) (fun x => x == 4)
+--   (fun x y => (y == x + 1) || (y == x + 2)) (fun x => if x == 2 then 10 else 1)
 
 end SolidGridHam.MP

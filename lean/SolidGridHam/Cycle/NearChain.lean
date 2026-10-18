@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.NearGeo
+module
+
+public import SolidGridHam.Cycle.NearGeo
+
+@[expose] public section
 
 /-!
 # Chains of contacts and suffix strips

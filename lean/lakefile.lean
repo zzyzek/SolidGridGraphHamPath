@@ -12,3 +12,9 @@ require mathlib from git
 
 @[default_target]
 lean_lib «SolidGridHam» where
+
+-- The Palomar registry statement (`Challenge`, imports only Mathlib) and its solution.
+--
+lean_lib «Challenge» where
+
+lean_lib «Solution» where

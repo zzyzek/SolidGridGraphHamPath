@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Basic.Arcs
+module
+
+public import SolidGridHam.Basic.Arcs
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # The potential `D` of a pair of factors
@@ -303,12 +308,6 @@ lemma SolidFor.of_off {V : Finset Pt} {F F' H : Finset Edge} (hs : SolidFor V F 
   fun w hw => by rw [h w hw]; exact hs w hw
 
 /-! ## D3: flipping a cell -/
-
--- The four sides of cell `c`, and the edge set obtained by flipping them.
---
-def cellE (c : Pt) : Finset Edge := {bot c, top c, lft c, rgt c}
-
-def flip (F : Finset Edge) (c : Pt) : Finset Edge := symmDiff F (cellE c)
 
 lemma up_congr {F F' : Finset Edge} {e : Edge} (h : e ∈ F ↔ e ∈ F') : up F e = up F' e := by
   unfold up inE1; simp [h]

@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Agree
+module
+
+public import SolidGridHam.Path.Agree
+
+@[expose] public section
 
 /-!
 # Lemma 2 with a budget: pieces lost to a list of joins

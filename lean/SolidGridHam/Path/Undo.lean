@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SPhaseAlg
+module
+
+public import SolidGridHam.Path.SPhaseAlg
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # S4: undoing the bridges (docs/S4_UNDO.md, Part I)
@@ -37,13 +42,6 @@ theorem step_rel {b : Bridge} (hrs : RowStep V H b)
     conn_of_uncut Fun (isCorner_back1 _ _) (isCorner_back2 _ _)
   rw [split_rel_pf (mkLat b.E b.a) Fl1 Fl2 hsame x y, hres]
   rfl
-
-structure Join where
-  c : Pt
-  a : Side
-  n : ℕ
-
-def Join.apply (G : Finset Edge) (o : Join) : Finset Edge := flipCol G o.c o.a o.n
 
 -- An edge toggled by a joiner: a side of an odd number of its cells.
 --

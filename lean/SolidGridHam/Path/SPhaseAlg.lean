@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SAlg
+module
+
+public import SolidGridHam.Path.SAlg
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # One phase, decided
@@ -23,16 +28,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
-inductive POut
-  | stuck
-  | merge (c : Pt)
-  | odd (b : Bridge)
-  | twist (b : Bridge)
-  | fuel
-
-def flipSplits (W : Finset Pt) (H : Finset Edge) (b : Bridge) : Bool :=
-  !connB W (flip H b.E) (back1 b.E b.a) (front1 b.E b.a)
 
 def phase (V W : Finset Pt) : ℕ → Finset Edge → List Bridge → Finset Edge × List Bridge × POut
   | 0, H, BS => (H, BS, .fuel)

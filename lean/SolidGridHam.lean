@@ -2,157 +2,160 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Basic.Grid
-import SolidGridHam.Basic.Potential
-import SolidGridHam.Basic.Arcs
-import SolidGridHam.Basic.D
-import SolidGridHam.Basic.Conn
-import SolidGridHam.Basic.Planar
-import SolidGridHam.Basic.Graph
-import SolidGridHam.Cycle.Flip
-import SolidGridHam.Cycle.AFlip
-import SolidGridHam.Cycle.Iso
-import SolidGridHam.Cycle.Strip
-import SolidGridHam.Cycle.StripCount
-import SolidGridHam.Cycle.Walk
-import SolidGridHam.Cycle.Phase
-import SolidGridHam.Cycle.Phase2
-import SolidGridHam.Cycle.TheoremA
-import SolidGridHam.Cycle.V2
-import SolidGridHam.Cycle.Chain
-import SolidGridHam.Cycle.L57
-import SolidGridHam.Cycle.Dual
-import SolidGridHam.Cycle.V2Seq
-import SolidGridHam.Cycle.TwoFactor
-import SolidGridHam.Cycle.Comp
-import SolidGridHam.Cycle.Reroute
-import SolidGridHam.Cycle.Counts
-import SolidGridHam.Cycle.Created
-import SolidGridHam.Cycle.Cr2
-import SolidGridHam.Cycle.CrPath
-import SolidGridHam.Cycle.Enum
-import SolidGridHam.Cycle.MinPath
-import SolidGridHam.Cycle.Near
-import SolidGridHam.Cycle.Touch
-import SolidGridHam.Cycle.Stacked
-import SolidGridHam.Cycle.NearGeo
-import SolidGridHam.Cycle.NearChain
-import SolidGridHam.Cycle.NearLemma
-import SolidGridHam.Cycle.Reverse
-import SolidGridHam.Cycle.LinkGraph
-import SolidGridHam.Cycle.Algorithm
-import SolidGridHam.Cycle.AlgComplete
-import SolidGridHam.Cycle.ChainLinks
-import SolidGridHam.Cycle.NearCA
-import SolidGridHam.Cycle.PathComplete
-import SolidGridHam.Cycle.CostAlg
-import SolidGridHam.Cycle.Main
-import SolidGridHam.Cycle.Timed.Alg
-import SolidGridHam.Path.Prelim.Endpoint
-import SolidGridHam.Path.Prelim.StripCountPF
-import SolidGridHam.Path.Prelim.StripEvenPF
-import SolidGridHam.Path.Prelim.Fence
-import SolidGridHam.Path.Prelim.TheoremAPF
-import SolidGridHam.Path.FindFactor
-import SolidGridHam.Path.Prelim.StartPF
-import SolidGridHam.Path.FindFactorCost
-import SolidGridHam.Path.Prelim.Dangle
-import SolidGridHam.Path.Prelim.NotchPF
-import SolidGridHam.Path.TwoPhWalk
-import SolidGridHam.Path.HPFinal
-import SolidGridHam.Path.TwoPhWalkCost
-import SolidGridHam.Cycle.Complete
-import SolidGridHam.Cycle.CostConn
-import SolidGridHam.Cycle.CostMinPath
-import SolidGridHam.Cycle.CostStrips
-import SolidGridHam.Cycle.CostTwoFactor
-import SolidGridHam.Cycle.Timed.Conn
-import SolidGridHam.Cycle.Timed.MinPath
-import SolidGridHam.Cycle.Timed.Strips
-import SolidGridHam.Cycle.Timed.TimeM
-import SolidGridHam.Cycle.Timed.TwoFactor
-import SolidGridHam.Path.Agree
-import SolidGridHam.Path.Assemble
-import SolidGridHam.Path.Bridges
-import SolidGridHam.Path.CaseA1
-import SolidGridHam.Path.CaseA2
-import SolidGridHam.Path.CaseB
-import SolidGridHam.Path.Cert
-import SolidGridHam.Path.CertOf
-import SolidGridHam.Path.ColAfter
-import SolidGridHam.Path.ColC
-import SolidGridHam.Path.ColProof
-import SolidGridHam.Path.Column
-import SolidGridHam.Path.Compat0
-import SolidGridHam.Path.Compat1
-import SolidGridHam.Path.Compat2
-import SolidGridHam.Path.Compat3
-import SolidGridHam.Path.ConnSet
-import SolidGridHam.Path.E1
-import SolidGridHam.Path.E1After
-import SolidGridHam.Path.Final
-import SolidGridHam.Path.FinalLocal
-import SolidGridHam.Path.Freeze
-import SolidGridHam.Path.HalfBridge
-import SolidGridHam.Path.Height
-import SolidGridHam.Path.HoleAdm
-import SolidGridHam.Path.HoleOne
-import SolidGridHam.Path.HoleOneCost
-import SolidGridHam.Path.HoleRelax
-import SolidGridHam.Path.HoleRun
-import SolidGridHam.Path.HoleTry
-import SolidGridHam.Path.HoleTryCost
-import SolidGridHam.Path.HoleTwo
-import SolidGridHam.Path.HoleTwoV
-import SolidGridHam.Path.HoleTwoVCost
-import SolidGridHam.Path.HoleWalk
-import SolidGridHam.Path.HoleWalkCost
-import SolidGridHam.Path.LoopF
-import SolidGridHam.Path.Minimal
-import SolidGridHam.Path.Move
-import SolidGridHam.Path.MoveInv
-import SolidGridHam.Path.NoMid
-import SolidGridHam.Path.Node
-import SolidGridHam.Path.Overlap
-import SolidGridHam.Path.PairOf
-import SolidGridHam.Path.PhaseCount
-import SolidGridHam.Path.PhaseS
-import SolidGridHam.Path.PhaseSCost
-import SolidGridHam.Path.Prelim.CompCleanTg
-import SolidGridHam.Path.Prelim.RelPF
-import SolidGridHam.Path.Prelim.ZeroPF
-import SolidGridHam.Path.Rank
-import SolidGridHam.Path.Reduce
-import SolidGridHam.Path.ReduceS
-import SolidGridHam.Path.Run
-import SolidGridHam.Path.S4Merge
-import SolidGridHam.Path.S4MergeII
-import SolidGridHam.Path.S4RowSpec
-import SolidGridHam.Path.S4Rows
-import SolidGridHam.Path.S4TheoremR
-import SolidGridHam.Path.SAlg
-import SolidGridHam.Path.SPhase
-import SolidGridHam.Path.SPhaseAlg
-import SolidGridHam.Path.Shapes
-import SolidGridHam.Path.SheffBoundary
-import SolidGridHam.Path.SheffComp
-import SolidGridHam.Path.SheffCost
-import SolidGridHam.Path.SheffEndpoints
-import SolidGridHam.Path.SideAfter
-import SolidGridHam.Path.SideChain
-import SolidGridHam.Path.SideCol
-import SolidGridHam.Path.SideProof
-import SolidGridHam.Path.SideRun
-import SolidGridHam.Path.SlitHeight
-import SolidGridHam.Path.Stuck
-import SolidGridHam.Path.StuckL4
-import SolidGridHam.Path.Taut
-import SolidGridHam.Path.TriProof
-import SolidGridHam.Path.TwoPh
-import SolidGridHam.Path.TwoPhCost
-import SolidGridHam.Path.TwoPhS4
-import SolidGridHam.Path.TwoVortex
-import SolidGridHam.Path.Undo
-import SolidGridHam.Path.UndoCount
-import SolidGridHam.Path.WalkCount
-import SolidGridHam.Path.WalkGeo
+module
+
+public import SolidGridHam.Algorithm
+public import SolidGridHam.Basic.Grid
+public import SolidGridHam.Basic.Potential
+public import SolidGridHam.Basic.Arcs
+public import SolidGridHam.Basic.D
+public import SolidGridHam.Basic.Conn
+public import SolidGridHam.Basic.Planar
+public import SolidGridHam.Basic.Graph
+public import SolidGridHam.Cycle.Flip
+public import SolidGridHam.Cycle.AFlip
+public import SolidGridHam.Cycle.Iso
+public import SolidGridHam.Cycle.Strip
+public import SolidGridHam.Cycle.StripCount
+public import SolidGridHam.Cycle.Walk
+public import SolidGridHam.Cycle.Phase
+public import SolidGridHam.Cycle.Phase2
+public import SolidGridHam.Cycle.TheoremA
+public import SolidGridHam.Cycle.V2
+public import SolidGridHam.Cycle.Chain
+public import SolidGridHam.Cycle.L57
+public import SolidGridHam.Cycle.Dual
+public import SolidGridHam.Cycle.V2Seq
+public import SolidGridHam.Cycle.TwoFactor
+public import SolidGridHam.Cycle.Comp
+public import SolidGridHam.Cycle.Reroute
+public import SolidGridHam.Cycle.Counts
+public import SolidGridHam.Cycle.Created
+public import SolidGridHam.Cycle.Cr2
+public import SolidGridHam.Cycle.CrPath
+public import SolidGridHam.Cycle.Enum
+public import SolidGridHam.Cycle.MinPath
+public import SolidGridHam.Cycle.Near
+public import SolidGridHam.Cycle.Touch
+public import SolidGridHam.Cycle.Stacked
+public import SolidGridHam.Cycle.NearGeo
+public import SolidGridHam.Cycle.NearChain
+public import SolidGridHam.Cycle.NearLemma
+public import SolidGridHam.Cycle.Reverse
+public import SolidGridHam.Cycle.LinkGraph
+public import SolidGridHam.Cycle.Algorithm
+public import SolidGridHam.Cycle.AlgComplete
+public import SolidGridHam.Cycle.ChainLinks
+public import SolidGridHam.Cycle.NearCA
+public import SolidGridHam.Cycle.PathComplete
+public import SolidGridHam.Cycle.CostAlg
+public import SolidGridHam.Cycle.Main
+public import SolidGridHam.Cycle.Timed.Alg
+public import SolidGridHam.Path.Prelim.Endpoint
+public import SolidGridHam.Path.Prelim.StripCountPF
+public import SolidGridHam.Path.Prelim.StripEvenPF
+public import SolidGridHam.Path.Prelim.Fence
+public import SolidGridHam.Path.Prelim.TheoremAPF
+public import SolidGridHam.Path.FindFactor
+public import SolidGridHam.Path.Prelim.StartPF
+public import SolidGridHam.Path.FindFactorCost
+public import SolidGridHam.Path.Prelim.Dangle
+public import SolidGridHam.Path.Prelim.NotchPF
+public import SolidGridHam.Path.TwoPhWalk
+public import SolidGridHam.Path.HPFinal
+public import SolidGridHam.Path.TwoPhWalkCost
+public import SolidGridHam.Cycle.Complete
+public import SolidGridHam.Cycle.CostConn
+public import SolidGridHam.Cycle.CostMinPath
+public import SolidGridHam.Cycle.CostStrips
+public import SolidGridHam.Cycle.CostTwoFactor
+public import SolidGridHam.Cycle.Timed.Conn
+public import SolidGridHam.Cycle.Timed.MinPath
+public import SolidGridHam.Cycle.Timed.Strips
+public import SolidGridHam.Cycle.Timed.TimeM
+public import SolidGridHam.Cycle.Timed.TwoFactor
+public import SolidGridHam.Path.Agree
+public import SolidGridHam.Path.Assemble
+public import SolidGridHam.Path.Bridges
+public import SolidGridHam.Path.CaseA1
+public import SolidGridHam.Path.CaseA2
+public import SolidGridHam.Path.CaseB
+public import SolidGridHam.Path.Cert
+public import SolidGridHam.Path.CertOf
+public import SolidGridHam.Path.ColAfter
+public import SolidGridHam.Path.ColC
+public import SolidGridHam.Path.ColProof
+public import SolidGridHam.Path.Column
+public import SolidGridHam.Path.Compat0
+public import SolidGridHam.Path.Compat1
+public import SolidGridHam.Path.Compat2
+public import SolidGridHam.Path.Compat3
+public import SolidGridHam.Path.ConnSet
+public import SolidGridHam.Path.E1
+public import SolidGridHam.Path.E1After
+public import SolidGridHam.Path.Final
+public import SolidGridHam.Path.FinalLocal
+public import SolidGridHam.Path.Freeze
+public import SolidGridHam.Path.HalfBridge
+public import SolidGridHam.Path.Height
+public import SolidGridHam.Path.HoleAdm
+public import SolidGridHam.Path.HoleOne
+public import SolidGridHam.Path.HoleOneCost
+public import SolidGridHam.Path.HoleRelax
+public import SolidGridHam.Path.HoleRun
+public import SolidGridHam.Path.HoleTry
+public import SolidGridHam.Path.HoleTryCost
+public import SolidGridHam.Path.HoleTwo
+public import SolidGridHam.Path.HoleTwoV
+public import SolidGridHam.Path.HoleTwoVCost
+public import SolidGridHam.Path.HoleWalk
+public import SolidGridHam.Path.HoleWalkCost
+public import SolidGridHam.Path.LoopF
+public import SolidGridHam.Path.Minimal
+public import SolidGridHam.Path.Move
+public import SolidGridHam.Path.MoveInv
+public import SolidGridHam.Path.NoMid
+public import SolidGridHam.Path.Node
+public import SolidGridHam.Path.Overlap
+public import SolidGridHam.Path.PairOf
+public import SolidGridHam.Path.PhaseCount
+public import SolidGridHam.Path.PhaseS
+public import SolidGridHam.Path.PhaseSCost
+public import SolidGridHam.Path.Prelim.CompCleanTg
+public import SolidGridHam.Path.Prelim.RelPF
+public import SolidGridHam.Path.Prelim.ZeroPF
+public import SolidGridHam.Path.Rank
+public import SolidGridHam.Path.Reduce
+public import SolidGridHam.Path.ReduceS
+public import SolidGridHam.Path.Run
+public import SolidGridHam.Path.S4Merge
+public import SolidGridHam.Path.S4MergeII
+public import SolidGridHam.Path.S4RowSpec
+public import SolidGridHam.Path.S4Rows
+public import SolidGridHam.Path.S4TheoremR
+public import SolidGridHam.Path.SAlg
+public import SolidGridHam.Path.SPhase
+public import SolidGridHam.Path.SPhaseAlg
+public import SolidGridHam.Path.Shapes
+public import SolidGridHam.Path.SheffBoundary
+public import SolidGridHam.Path.SheffComp
+public import SolidGridHam.Path.SheffCost
+public import SolidGridHam.Path.SheffEndpoints
+public import SolidGridHam.Path.SideAfter
+public import SolidGridHam.Path.SideChain
+public import SolidGridHam.Path.SideCol
+public import SolidGridHam.Path.SideProof
+public import SolidGridHam.Path.SideRun
+public import SolidGridHam.Path.SlitHeight
+public import SolidGridHam.Path.Stuck
+public import SolidGridHam.Path.StuckL4
+public import SolidGridHam.Path.Taut
+public import SolidGridHam.Path.TriProof
+public import SolidGridHam.Path.TwoPh
+public import SolidGridHam.Path.TwoPhCost
+public import SolidGridHam.Path.TwoPhS4
+public import SolidGridHam.Path.TwoVortex
+public import SolidGridHam.Path.Undo
+public import SolidGridHam.Path.UndoCount
+public import SolidGridHam.Path.WalkCount
+public import SolidGridHam.Path.WalkGeo

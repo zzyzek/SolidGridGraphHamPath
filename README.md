@@ -47,8 +47,9 @@ An endpoint is *inner* when all eight of its king neighbours lie in `V`.
 
 Lean checks everything except the following.
 
-* **The definitions in the statement.** `Pt`, `Edge`, `IsEdge`, `deg`, `IsFactor`, `dST` and
-  `Solid` (`lean/SolidGridHam/Basic/Grid.lean`) and `ncomp` (`Basic/Graph.lean`). `Solid` says
+* **The definitions in the statement.** `Pt`, `Edge`, `IsEdge`, `deg`, `IsFactor`, `dST`, `ncomp`
+  and `Solid`, in `lean/SolidGridHam/Algorithm.lean`. That file holds every definition the
+  statement and the algorithm depend on, and nothing else. `Solid` says
   that every missing point reaches the outside of `V` by king moves through missing points. It
   is cross-checked by computation against "every bounded face is a unit square"
   (`checks/solid_check.py`, `checks/solid_check_grid.py`), not proved equivalent in Lean.
@@ -67,8 +68,9 @@ table in `lean/SolidGridHam/Cycle/Timed/TimeM.lean` and the lint `checks/timed_l
 ## Repository layout
 
 * `lean/SolidGridHam/`: the formalization (Lean 4 and Mathlib, about 47,000 lines).
-  * `Basic/`: grid graphs, factors, connectivity, arcs and heights. Every definition in the
-    statement of the main theorem is here.
+  * `Algorithm.lean`: the algorithm `decideHamPath` and every definition it and the statement of
+    the main theorem use, in one file of about 950 lines. The files below prove things about them.
+  * `Basic/`: grid graphs, factors, connectivity, arcs and heights.
   * `Path/`: the s–t path development. `HPFinal.lean` has `decideHamPath_main`. The phase and
     the certificate are in `SPhaseAlg`, `PhaseS`, `ReduceS`, `Cert*` and `Minimal`, the phantoms in
     `TwoPh*`, the deletion walks in `TwoPhWalk*` and `HoleWalk*`, the vortices and slit heights in
@@ -111,6 +113,15 @@ scripts/check.sh
 This builds with warnings treated as errors, prints the axioms of the main results
 (`lean/CheckAxioms.lean`) and fails unless they are exactly `propext`, `Classical.choice` and
 `Quot.sound`, and runs the cost-model lint.
+
+## Palomar registry
+
+`lean/Challenge.lean` states the correctness theorem `SolidGridHam.HP.decideHamPath_correct` with
+`sorry`, after a verbatim copy of `lean/SolidGridHam/Algorithm.lean`. It imports only Mathlib.
+`lean/Solution.lean` imports the library, which proves the theorem. `lean/comparator.json`
+configures [`lake comparator`](https://github.com/leanprover/comparator) to check that the two
+agree and that the proof uses only `propext`, `Classical.choice` and `Quot.sound`.
+`lean/formalization.yaml` holds the registry metadata.
 
 ## Running the algorithm
 

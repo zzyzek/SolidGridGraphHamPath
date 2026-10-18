@@ -2,8 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.PhaseS
-import SolidGridHam.Path.TwoPhCost
+module
+
+public import SolidGridHam.Path.PhaseS
+public import SolidGridHam.Path.TwoPhCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # The undo with connections computed once per state, and the fast two-phantom loop
@@ -22,35 +27,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
-def bridgeStatesConn (W : Finset Pt) : Finset Edge → List Bridge → List (Finset (Pt × Pt))
-  | _, [] => []
-  | H, b :: BS => connectedPairs W (flip H b.E) :: bridgeStatesConn W (flip H b.E) BS
-
-def undoPlanSteps : List (Finset (Pt × Pt)) → List Bridge → Pt × Pt → List (Bool × (Pt × Pt))
-  | S :: Ss, b :: BS, uv =>
-    if isConnected S uv.1 uv.2 then (true, uv) :: undoPlanSteps Ss BS (rowStartPair b)
-    else (false, uv) :: undoPlanSteps Ss BS uv
-  | _, _, _ => []
-
-def undoPlan (Ss : List (Finset (Pt × Pt))) (BS : List Bridge) (uv : Pt × Pt) : List Join :=
-  List.zipWith (fun b e => if e.1 then lowJ b else undoJ b) BS (undoPlanSteps Ss BS uv)
-
-def isGoodMergingCell (W : Finset Pt) (H : Finset Edge) (BS : List Bridge) (Ss : List (Finset (Pt × Pt)))
-    (X : Pt) : Bool :=
-  decide (Alt H X) && cutB W H X && !pairSqB BS X &&
-    (let P := undoPlanSteps Ss BS (mergePair H X)
-     (List.finRange BS.length).all fun i =>
-      (P.getD i (false, mergePair H X)).1 || decide (X ≠ nb (BS.get i).E (BS.get i).a))
-
-def reducePieces (V W : Finset Pt) (H : Finset Edge) (BS : List Bridge) : POut → Finset Edge
-  | .merge c =>
-    let Ss := bridgeStatesConn W H BS
-    let X := ((cellList V).find? (isGoodMergingCell W H BS Ss)).getD c
-    applyAll (flipCol H X (altFrame H X) 1) (undoPlan Ss BS (mergePair H X))
-  | .odd b => applyAll (flipCol H b.q b.a b.r) (undoPlan (bridgeStatesConn W H BS) BS (rowStartPair b))
-  | .twist b => applyAll (flipCol H b.q b.a b.r) (undoPlan (bridgeStatesConn W H BS) BS (rowStartPair b))
-  | _ => H
 
 section eq
 
@@ -116,16 +92,6 @@ theorem reducePieces_eq {V : Finset Pt} (hVW : V ⊆ W) {H : Finset Edge} {BS : 
 end eq
 
 /-! ## The fast two-phantom loop -/
-
-def twoPhantomLoop (V : Finset Pt) (p q : Pt) : ℕ → Finset Edge → Bool
-  | 0, G => cncomp (insert q (insert p V)) G == 1
-  | n + 1, G =>
-    if cncomp (insert q (insert p V)) G == 1 then true
-    else
-      match runPhase V (insert q (insert p V)) ((insert q (insert p V)).card + 1) G [] with
-      | (_, _, .stuck) => false
-      | (_, _, .fuel) => false
-      | (H, BS, out) => twoPhantomLoop V p q n (reducePieces V (insert q (insert p V)) H BS out)
 
 section loopF
 

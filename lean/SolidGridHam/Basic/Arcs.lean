@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Basic.Potential
+module
+
+public import SolidGridHam.Basic.Potential
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Dependency arcs (thesis §4.1–4.2, paper Definition 3)
@@ -19,21 +24,6 @@ formula.
 -/
 
 namespace SolidGridHam
-
--- Cell colour: true for odd `x + y`.
---
-def par (c : Pt) : Bool := decide ((c.1 + c.2) % 2 = 1)
-
--- `e ∈ E1(F)`.
---
-def inE1 (F : Finset Edge) (e : Edge) : Bool :=
-  match e.d with
-  | .h => decide (e ∈ F)
-  | .v => !decide (e ∈ F)
-
--- The arc across `e` points from its low cell to its high cell.
---
-def up (F : Finset Edge) (e : Edge) : Bool := (par e.lo == inE1 F e)
 
 /-! ## Parity bookkeeping -/
 
@@ -57,49 +47,11 @@ lemma par_sub_sub (c : Pt) : par (c.1 - 1, c.2 - 1) = par c := by
 The four sides of a cell, and whether the arc across a side points out of the cell.
 -/
 
-inductive Side
-  | b
-  | t
-  | l
-  | r
-  deriving DecidableEq, Repr
-
-def sideEdge (c : Pt) : Side → Edge
-  | .b => bot c
-  | .t => top c
-  | .l => lft c
-  | .r => rgt c
-
--- The neighbouring cell across a side.
---
-def nb (c : Pt) : Side → Pt
-  | .b => (c.1, c.2 - 1)
-  | .t => (c.1, c.2 + 1)
-  | .l => (c.1 - 1, c.2)
-  | .r => (c.1 + 1, c.2)
-
--- The opposite side.
---
-def Side.opp : Side → Side
-  | .b => .t
-  | .t => .b
-  | .l => .r
-  | .r => .l
-
 def Side.horiz : Side → Bool
   | .b => true
   | .t => true
   | .l => false
   | .r => false
-
--- The arc across side `s` of `c` points out of `c`.
---
-def outArc (F : Finset Edge) (c : Pt) (s : Side) : Bool :=
-  match s with
-  | .b => !up F (bot c)
-  | .t => up F (top c)
-  | .l => !up F (lft c)
-  | .r => up F (rgt c)
 
 -- Closed form: on horizontal sides the arc points out iff `par c` agrees with membership
 -- in `F`; on vertical sides iff they disagree.
@@ -134,15 +86,6 @@ def darkB (F : Finset Edge) (c : Pt) : Bool := decide (bot c ∈ F)
 def darkT (F : Finset Edge) (c : Pt) : Bool := decide (top c ∈ F)
 def darkL (F : Finset Edge) (c : Pt) : Bool := decide (lft c ∈ F)
 def darkR (F : Finset Edge) (c : Pt) : Bool := decide (rgt c ∈ F)
-
--- An alternating cell: two opposite sides in `F`, the other two not.
---
-def Alt (F : Finset Edge) (c : Pt) : Prop :=
-  (bot c ∈ F ∧ top c ∈ F ∧ lft c ∉ F ∧ rgt c ∉ F) ∨
-  (bot c ∉ F ∧ top c ∉ F ∧ lft c ∈ F ∧ rgt c ∈ F)
-
-instance (F : Finset Edge) (c : Pt) : Decidable (Alt F c) := by
-  unfold Alt; infer_instance
 
 -- All four arcs point out of `c` (a source) / into `c` (a sink).
 --

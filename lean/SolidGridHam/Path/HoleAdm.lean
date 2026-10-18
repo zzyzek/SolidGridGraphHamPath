@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SlitHeight
+module
+
+public import SolidGridHam.Path.SlitHeight
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Hole classes: factors as admissible potentials (B-3, docs/HOLE_CLASSES.md §3.1, §3.2)
@@ -30,8 +35,6 @@ namespace HP
 open Finset
 
 /-! ## Signs and `D` as a difference of row sums -/
-
-def sv (F : Finset Edge) (e : Edge) : ℤ := if up F e then 1 else -1
 
 noncomputable def Sc (V : Finset Pt) (F : Finset Edge) (c : Pt) : ℤ :=
   ∑ e ∈ (GE V).filter (RowSel c), sv F e

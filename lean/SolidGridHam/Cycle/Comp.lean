@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.TwoFactor
+module
+
+public import SolidGridHam.Cycle.TwoFactor
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Computable classes
@@ -16,23 +21,6 @@ Cost: `|V|` rounds, each scanning four edges at every point found so far.
 namespace SolidGridHam
 
 open Finset
-
--- The points one step from `u` along `F`.
---
-def fnbr (F : Finset Edge) (u : Pt) : Finset Pt :=
-  (((TF.inc4 u).filter (fun e => decide (e ∈ F))).map (fun e => other e u)).toFinset
-
--- Points reachable from `x` in at most `k` steps.
---
-def creach (F : Finset Edge) (x : Pt) : ℕ → Finset Pt
-  | 0 => {x}
-  | k + 1 =>
-    let C := creach F x k
-    C ∪ C.biUnion (fnbr F)
-
-def ccls (V : Finset Pt) (F : Finset Edge) (x : Pt) : Finset Pt := creach F x V.card
-
-def cncomp (V : Finset Pt) (F : Finset Edge) : ℕ := (V.image (ccls V F)).card
 
 section comp
 

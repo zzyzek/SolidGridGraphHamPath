@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.S4MergeII
+module
+
+public import SolidGridHam.Path.S4MergeII
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Theorem R: a good merging cell exists (docs/S4_RESIDUAL.md §1–§3)
@@ -21,10 +26,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
--- The start pair of a merging cell (the pair `reduceOut` uses).
---
-def mergePair (H : Finset Edge) (X : Pt) : Pt × Pt := (back1 X (altFrame H X), front1 X (altFrame H X))
 
 lemma planA_fst_swap : ∀ (BS : List Bridge) (H : Finset Edge) (u v : Pt),
     (planA H BS (u, v)).map Prod.fst = (planA H BS (v, u)).map Prod.fst

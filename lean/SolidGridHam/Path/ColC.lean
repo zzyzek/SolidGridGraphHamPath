@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.CertOf
+module
+
+public import SolidGridHam.Path.CertOf
+
+@[expose] public section
 
 /-!
 # Lemma C: the column after a cut square (docs/COL_SIDE.md §3)

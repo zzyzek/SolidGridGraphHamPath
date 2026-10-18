@@ -2,10 +2,14 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Rank
-import SolidGridHam.Path.Taut
-import SolidGridHam.Cycle.Chain
-import SolidGridHam.Cycle.Phase
+module
+
+public import SolidGridHam.Path.Rank
+public import SolidGridHam.Path.Taut
+public import SolidGridHam.Cycle.Chain
+public import SolidGridHam.Cycle.Phase
+
+@[expose] public section
 
 /-!
 # The final count (repaired §4.8, steps (2)–(3))

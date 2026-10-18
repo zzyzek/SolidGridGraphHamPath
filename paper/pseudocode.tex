@@ -30,7 +30,8 @@ Each round of that loop is a \proc{RunPhase} followed by \proc{ReducePieces}.
 
 The blocks below use the following conventions.
 Each procedure has the name of its Lean definition, capitalised, and the caption of its block gives
-the Lean file.
+that name.
+All of these definitions are in \lean{Algorithm.lean}.
 Helper predicates and functions are set in sans serif and are described after each block with
 their Lean names.
 $\pfn{Nbrs}(t)$ (Lean \lean{nbrsL}) is the list of pairs $(y,e)$ with $y$ a lattice neighbour of
@@ -44,7 +45,7 @@ The Python reference implementation returns the path as a witness instead of
 \pctrue.
 
 \begin{algorithm}[htbp]
-\caption{\proc{DecideHamPath} (Lean \lean{decideHamPath}, \lean{HPFinal.lean})}
+\caption{\proc{DecideHamPath} (Lean \lean{decideHamPath})}
 \label{alg:decideHamPath}
 \begin{algorithmic}[1]
 \Function{DecideHamPath}{$V,s,t$}
@@ -67,7 +68,7 @@ In \cref{alg:decideHamPath}, $\pfn{IsInner}(V,p)$ (Lean \lean{isInner}) holds wh
 corner $p$ are cells of $V$.
 
 \begin{algorithm}[htbp]
-\caption{\proc{BoundaryEndpoints} (Lean \lean{boundaryEndpoints}, \lean{TwoPhWalk.lean})}
+\caption{\proc{BoundaryEndpoints} (Lean \lean{boundaryEndpoints})}
 \label{alg:boundaryEndpoints}
 \begin{algorithmic}[1]
 \Function{BoundaryEndpoints}{$V,s,t$}
@@ -89,7 +90,7 @@ corner $p$ are cells of $V$.
 \end{algorithm}
 
 \begin{algorithm}[htbp]
-\caption{\proc{BoundaryEndpointsWalk} (Lean \lean{boundaryEndpointsWalk}, \lean{TwoPhWalk.lean})}
+\caption{\proc{BoundaryEndpointsWalk} (Lean \lean{boundaryEndpointsWalk})}
 \label{alg:boundaryEndpointsWalk}
 \begin{algorithmic}[1]
 \Function{BoundaryEndpointsWalk}{$s,q,e_{sq},\var{fuel},V,t$}
@@ -125,9 +126,8 @@ $\pfn{PhantomsOpposed}(a,m_a,b,m_b)$ (Lean \lean{phantomsOpposed}) holds when th
 $m_b$ of $b$ are opposed (\cref{def:opp}).
 
 \begin{algorithm}[htbp]
-\caption{\proc{HoleCase} (Lean \lean{holeCase}, \lean{HoleWalk.lean}), \proc{OneHoleCase} (Lean
-  \lean{oneHoleCase}, \lean{HoleWalk.lean}) and \proc{TwoHoleCase} (Lean \lean{twoHoleCase},
-  \lean{HoleTwoV.lean})}
+\caption{\proc{HoleCase} (Lean \lean{holeCase}), \proc{OneHoleCase} (Lean
+  \lean{oneHoleCase}) and \proc{TwoHoleCase} (Lean \lean{twoHoleCase})}
 \label{alg:holeCase}
 \label{alg:oneHoleCase}
 \label{alg:twoHoleCase}
@@ -175,7 +175,7 @@ In \proc{TwoHoleCase} the original $s$ is passed to \proc{TwoHoleFinalTest} as t
 $r$.
 
 \begin{algorithm}[htbp]
-\caption{\proc{HoleCaseWalk} (Lean \lean{holeCaseWalk}, \lean{HoleWalk.lean})}
+\caption{\proc{HoleCaseWalk} (Lean \lean{holeCaseWalk})}
 \label{alg:holeCaseWalk}
 \begin{algorithmic}[1]
 \Function{HoleCaseWalk}{$\var{finalTest},w,p_w,\var{fuel},U,s,q,e_{sq}$}
@@ -204,8 +204,8 @@ The phantom $q$ of $s$ is the point deleted last, and $e_{sq}$ is the edge $s$--
 The fuel $10$ allows the at most $9$ deletions of \cref{sec:one}.
 
 \begin{algorithm}[htbp]
-\caption{\proc{OneHoleFinalTest} (Lean \lean{oneHoleFinalTest}, \lean{HoleWalk.lean}) and
-  \proc{TwoHoleFinalTest} (Lean \lean{twoHoleFinalTest}, \lean{HoleTwoV.lean})}
+\caption{\proc{OneHoleFinalTest} (Lean \lean{oneHoleFinalTest}) and
+  \proc{TwoHoleFinalTest} (Lean \lean{twoHoleFinalTest})}
 \label{alg:oneHoleFinalTest}
 \label{alg:twoHoleFinalTest}
 \begin{algorithmic}[1]
@@ -257,8 +257,8 @@ The degrees $d_{sw}$ are $1$ at $s$ and $w$ and $2$ elsewhere.
 The factor $F$ is a two-phantom factor on $U\cup\{t,q\}$ with phantoms $t$ of $w$ and $q$ of $s$.
 
 \begin{algorithm}[htbp]
-\caption{\proc{ClassSearch} (Lean \lean{classSearch}, \lean{HoleTry.lean}, with \lean{classPotential} and
-  \lean{relaxA}, \lean{HoleRelax.lean})}
+\caption{\proc{ClassSearch} (Lean \lean{classSearch}, with \lean{classPotential} and
+  \lean{relaxA})}
 \label{alg:classSearch}
 \begin{algorithmic}[1]
 \Function{ClassSearch}{$V,F,[a_1,\dots,a_k],[h_1,\dots,h_k]$}
@@ -309,8 +309,8 @@ The potentials are stored in an array indexed by box position (\lean{toFA}).
 With one hole, \proc{ClassSearch} is the Lean \lean{classSearchOne}.
 
 \begin{algorithm}[htbp]
-\caption{\proc{TwoPhantomTest} (Lean \lean{twoPhantomTest}, \lean{LoopF.lean}) and
-  \proc{TwoPhantomLoop} (Lean \lean{twoPhantomLoop}, \lean{ReduceS.lean})}
+\caption{\proc{TwoPhantomTest} (Lean \lean{twoPhantomTest}) and
+  \proc{TwoPhantomLoop} (Lean \lean{twoPhantomLoop})}
 \label{alg:twoPhantomTest}
 \label{alg:twoPhantomLoop}
 \begin{algorithmic}[1]
@@ -343,7 +343,7 @@ With one hole, \proc{ClassSearch} is the Lean \lean{classSearchOne}.
 \end{algorithm}
 
 \begin{algorithm}[htbp]
-\caption{\proc{RunPhase} (Lean \lean{runPhase}, \lean{PhaseS.lean})}
+\caption{\proc{RunPhase} (Lean \lean{runPhase})}
 \label{alg:runPhase}
 \begin{algorithmic}[1]
 \Function{RunPhase}{$V,W,\var{fuel},H,\var{bridges}$}
@@ -395,7 +395,7 @@ $\pfn{FlipSplits}(W,H,b)$ (Lean \lean{flipSplits}) holds when, after the flip of
 $b_1$ and $f_1$ of $E_b$ lie in different pieces.
 
 \begin{algorithm}[htbp]
-\caption{\proc{ReducePieces} (Lean \lean{reducePieces}, \lean{ReduceS.lean}) and
+\caption{\proc{ReducePieces} (Lean \lean{reducePieces}) and
   \proc{UndoBridges} (Lean \lean{applyAll} and \lean{undoPlan})}
 \label{alg:reducePieces}
 \begin{algorithmic}[1]
@@ -459,7 +459,7 @@ first.
 
 \begin{algorithm}[htbp]
 \caption{\proc{FindFactor} (Lean \lean{findFactor} with \lean{augLoop}, \lean{augStep} and
-  \lean{layerAcc}) and \proc{AugmentingWalk} (Lean \lean{walk}), \lean{FindFactor.lean}}
+  \lean{layerAcc}) and \proc{AugmentingWalk} (Lean \lean{walk})}
 \label{alg:findFactor}
 \begin{algorithmic}[1]
 \Function{FindFactor}{$V,d$}

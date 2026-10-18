@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Reroute
+module
+
+public import SolidGridHam.Cycle.Reroute
+
+@[expose] public section
 
 /-!
 # The boundary created by one even strip, seen from `F`

@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Node
+module
+
+public import SolidGridHam.Path.Node
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # The reduction after a successful phase
@@ -26,10 +31,6 @@ open Finset Classical
 --
 def relPts (ops : List Join) (x : Pt) : Prop :=
   ∃ o ∈ ops, x = back1 o.c o.a ∨ x = front1 o.c o.a
-
--- The frame of an alternating cell in which its back and front are dark.
---
-def altFrame (G : Finset Edge) (X : Pt) : Side := if bot X ∈ G then .t else .r
 
 -- The conditions `undo_count` needs for the half bridge `M` with pair `uv`, applied to `H`
 -- giving `G`; `k` bounds the half bridge's interior points.

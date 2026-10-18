@@ -2,8 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Undo
-import SolidGridHam.Path.Prelim.CompCleanTg
+module
+
+public import SolidGridHam.Path.Undo
+public import SolidGridHam.Path.Prelim.CompCleanTg
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # S4: the count of the undo plan (docs/S4_UNDO.md, Theorem I.8)
@@ -30,10 +35,6 @@ noncomputable def plan (H : Finset Edge) : List Bridge → Pt × Pt → List Joi
     if Conn (flip H b.E) uv.1 uv.2 then
       ⟨b.q, b.a, b.r - 1⟩ :: plan (flip H b.E) BS (back1 b.q b.a, front1 b.q b.a)
     else ⟨b.E, b.a, 1⟩ :: plan (flip H b.E) BS uv
-
-def applyAll (G : Finset Edge) : List Join → Finset Edge
-  | [] => G
-  | o :: os => applyAll (o.apply G) os
 
 -- The operations are intact in `G`, odd strips of cells, their pairs are relevant points and no
 -- relevant point is an interior point of any of them; an earlier one toggles no side of a later

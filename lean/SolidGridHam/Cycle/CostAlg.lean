@@ -2,10 +2,14 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.CostStrips
-import SolidGridHam.Cycle.CostMinPath
-import SolidGridHam.Cycle.CostTwoFactor
-import SolidGridHam.Cycle.Timed.TimeM
+module
+
+public import SolidGridHam.Cycle.CostStrips
+public import SolidGridHam.Cycle.CostMinPath
+public import SolidGridHam.Cycle.CostTwoFactor
+public import SolidGridHam.Cycle.Timed.TimeM
+
+@[expose] public section
 
 /-!
 # Running time, part 5: rounds, runs and the whole algorithm

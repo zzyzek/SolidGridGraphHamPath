@@ -2,9 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Prelim.StripEvenPF
-import SolidGridHam.Cycle.V2
-import SolidGridHam.Cycle.Cr2
+module
+
+public import SolidGridHam.Path.Prelim.StripEvenPF
+public import SolidGridHam.Cycle.V2
+public import SolidGridHam.Cycle.Cr2
+
+@[expose] public section
 
 /-!
 # Connection relations of flips and strips, for path-factors

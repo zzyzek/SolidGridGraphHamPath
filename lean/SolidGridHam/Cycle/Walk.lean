@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.StripCount
+module
+
+public import SolidGridHam.Cycle.StripCount
+
+@[expose] public section
 
 /-!
 # The boundary walk (thesis Lemmas 6.3, 6.4; paper Claims 1, 2)

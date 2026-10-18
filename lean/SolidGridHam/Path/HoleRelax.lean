@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleAdm
+module
+
+public import SolidGridHam.Path.HoleAdm
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Hole classes: the relaxation (B-3, docs/HOLE_CLASSES.md §3.2, port of ulhc-hole `KHole2/3`)
@@ -29,11 +34,6 @@ open Finset
 
 /-! ## The box -/
 
-def bx0 (V : Finset Pt) : ℤ := if h : V.Nonempty then V.inf' h Prod.fst else 0
-def bx1 (V : Finset Pt) : ℤ := if h : V.Nonempty then V.sup' h Prod.fst else 0
-def by0 (V : Finset Pt) : ℤ := if h : V.Nonempty then V.inf' h Prod.snd else 0
-def by1 (V : Finset Pt) : ℤ := if h : V.Nonempty then V.sup' h Prod.snd else 0
-
 lemma box_mem {V : Finset Pt} {p : Pt} (hp : p ∈ V) :
     bx0 V ≤ p.1 ∧ p.1 ≤ bx1 V ∧ by0 V ≤ p.2 ∧ p.2 ≤ by1 V := by
   have hn : V.Nonempty := ⟨p, hp⟩
@@ -49,16 +49,6 @@ lemma box_attain {V : Finset Pt} (hn : V.Nonempty) :
   · obtain ⟨p, hp, h⟩ := Finset.exists_mem_eq_sup' hn Prod.fst; exact ⟨p, hp, h.symm⟩
   · obtain ⟨p, hp, h⟩ := Finset.exists_mem_eq_inf' hn Prod.snd; exact ⟨p, hp, h.symm⟩
   · obtain ⟨p, hp, h⟩ := Finset.exists_mem_eq_sup' hn Prod.snd; exact ⟨p, hp, h.symm⟩
-
--- The width bound on hole values.
---
-def boxWidth (V : Finset Pt) : ℤ := bx1 V - bx0 V
-
--- The cells strictly inside the box: `bx0 ≤ x < bx1`, `by0 ≤ y < by1`.
---
-def boxSquares (V : Finset Pt) : List Pt :=
-  (List.range (bx1 V - bx0 V).toNat).flatMap fun (i : ℕ) =>
-    (List.range (by1 V - by0 V).toNat).map fun (j : ℕ) => ((bx0 V + (i : ℤ), by0 V + (j : ℤ)) : Pt)
 
 lemma mem_kSq {V : Finset Pt} {c : Pt} :
     c ∈ boxSquares V ↔ bx0 V ≤ c.1 ∧ c.1 < bx1 V ∧ by0 V ≤ c.2 ∧ c.2 < by1 V := by
@@ -98,17 +88,6 @@ lemma toF_map (S : List Pt) (g : Pt → ℤ) (c : Pt) :
     toF (S.map (fun s => (s, g s))) c = if c ∈ S then g c else 0 := by
   unfold toF; rw [lookup_map]; split_ifs <;> rfl
 
--- The allowed jumps across `e`, as an interval.
---
-def ivl (V : Finset Pt) (F : Finset Edge) (e : Edge) : ℤ × ℤ :=
-  if IsEdge V e then (min 0 (sv F e), max 0 (sv F e)) else (0, 0)
-
--- The largest lower bound the four sides of `s` force on `f s`.
---
-def lowerBound (V : Finset Pt) (F : Finset Edge) (f : Pt → ℤ) (s : Pt) : ℤ :=
-  max (max (f (bot s).lo + (ivl V F (bot s)).1) (f (lft s).lo + (ivl V F (lft s)).1))
-    (max (f (top s).hi - (ivl V F (top s)).2) (f (rgt s).hi - (ivl V F (rgt s)).2))
-
 def roundL (V : Finset Pt) (F : Finset Edge) (S : List Pt) (L : List (Pt × ℤ)) :
     List (Pt × ℤ) :=
   S.map fun s => (s, max (toF L s) (lowerBound V F (toF L) s))
@@ -124,20 +103,6 @@ def relax (V : Finset Pt) (F : Finset Edge) (S : List Pt) :
 --
 def kInit (V : Finset Pt) (as : List Pt) (hs : List ℤ) : List (Pt × ℤ) :=
   (boxSquares V).map fun s => (s, ((as.zip hs).lookup s).getD (- boxWidth V))
-
-def sideOK (V : Finset Pt) (F : Finset Edge) (f : Pt → ℤ) (e : Edge) : Bool :=
-  decide (f e.hi - f e.lo = 0 ∨ (IsEdge V e ∧ f e.hi - f e.lo = sv F e))
-
-def sides (s : Pt) : List Edge := [bot s, lft s, top s, rgt s]
-
-def isAdmissible (V : Finset Pt) (F : Finset Edge) (as : List Pt) (hs : List ℤ) (f : Pt → ℤ) :
-    Bool :=
-  (boxSquares V).all (fun s => (sides s).all (sideOK V F f)) && (as.zip hs).all (fun ah => f ah.1 == ah.2)
-
-def jumpEdges (V : Finset Pt) (f : Pt → ℤ) : Finset Edge :=
-  (((boxSquares V).flatMap sides).filter (fun e => decide (IsEdge V e ∧ f e.hi ≠ f e.lo))).toFinset
-
-def kFuel (V : Finset Pt) : ℕ := (boxSquares V).length + 1
 
 def kWide (V : Finset Pt) : Bool :=
   decide ((V.card : ℤ) ≤ bx1 V - bx0 V ∨ (V.card : ℤ) ≤ by1 V - by0 V)
@@ -457,20 +422,6 @@ The relaxation stores the potential in an array indexed by the box position, so 
 is one step. `relaxA` computes exactly what `relax` computes on association lists (`toFA_relaxA`).
 -/
 
-def kWn (V : Finset Pt) : ℕ := (bx1 V - bx0 V).toNat
-
-def kHn (V : Finset Pt) : ℕ := (by1 V - by0 V).toNat
-
-def inBox (V : Finset Pt) (c : Pt) : Prop := bx0 V ≤ c.1 ∧ c.1 < bx1 V ∧ by0 V ≤ c.2 ∧ c.2 < by1 V
-
-instance (V : Finset Pt) (c : Pt) : Decidable (inBox V c) := by unfold inBox; infer_instance
-
-def idx (V : Finset Pt) (c : Pt) : ℕ := (c.1 - bx0 V).toNat * kHn V + (c.2 - by0 V).toNat
-
-def cellOf (V : Finset Pt) (k : ℕ) : Pt := (bx0 V + ((k / kHn V : ℕ) : ℤ), by0 V + ((k % kHn V : ℕ) : ℤ))
-
-def toFA (V : Finset Pt) (A : Array ℤ) (c : Pt) : ℤ := if inBox V c then A.getD (idx V c) 0 else 0
-
 lemma inBox_iff {V : Finset Pt} {c : Pt} : inBox V c ↔ c ∈ boxSquares V := by
   rw [mem_kSq]; rfl
 
@@ -521,23 +472,10 @@ lemma toFA_ofFn {V : Finset Pt} (g : Pt → ℤ) (c : Pt) :
     rw [cellOf_idx h]
   · rw [ite_eq_right h, ite_eq_right (fun h' => h (inBox_iff.2 h'))]
 
-def roundA (V : Finset Pt) (F : Finset Edge) (A : Array ℤ) : Array ℤ :=
-  Array.ofFn (n := kWn V * kHn V) fun k =>
-    max (toFA V A (cellOf V k)) (lowerBound V F (toFA V A) (cellOf V k))
-
 lemma toFA_roundA (V : Finset Pt) (F : Finset Edge) (A : Array ℤ) (c : Pt) :
     toFA V (roundA V F A) c =
       if c ∈ boxSquares V then max (toFA V A c) (lowerBound V F (toFA V A) c) else 0 :=
   toFA_ofFn (fun c => max (toFA V A c) (lowerBound V F (toFA V A) c)) c
-
-def relaxA (V : Finset Pt) (F : Finset Edge) : ℕ → Array ℤ → Array ℤ
-  | 0, A => A
-  | n + 1, A =>
-    let A' := roundA V F A
-    if (boxSquares V).all (fun c => toFA V A' c == toFA V A c) then A else relaxA V F n A'
-
-def kInitA (V : Finset Pt) (as : List Pt) (hs : List ℤ) : Array ℤ :=
-  Array.ofFn (n := kWn V * kHn V) fun k => ((as.zip hs).lookup (cellOf V k)).getD (- boxWidth V)
 
 lemma shape_eq_iff {S : List Pt} {L L' : List (Pt × ℤ)} (hL : Shape S L) (hL' : Shape S L') :
     L' = L ↔ ∀ c ∈ S, toF L' c = toF L c := by
@@ -569,9 +507,6 @@ theorem toFA_relaxA {V : Finset Pt} {F : Finset Edge} :
     · rw [ite_eq_left (hstop.2 hs), ite_eq_left hs]; exact h
     · rw [ite_eq_right (fun h' => hs (hstop.1 h')), ite_eq_right hs]
       exact ih _ _ (shape_roundL L) hR
-
-def classPotential (V : Finset Pt) (F : Finset Edge) (as : List Pt) (hs : List ℤ) : Pt → ℤ :=
-  toFA V (relaxA V F (kFuel V) (kInitA V as hs))
 
 lemma classPotential_eq {V : Finset Pt} {F : Finset Edge} {as : List Pt} {hs : List ℤ} :
     classPotential V F as hs = toF (relax V F (boxSquares V) (kFuel V) (kInit V as hs)) := by

@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Reverse
-import SolidGridHam.Cycle.ChainLinks
+module
+
+public import SolidGridHam.Cycle.Reverse
+public import SolidGridHam.Cycle.ChainLinks
+
+@[expose] public section
 
 /-!
 # Completeness, part 1: Type III cells after an even strip are links

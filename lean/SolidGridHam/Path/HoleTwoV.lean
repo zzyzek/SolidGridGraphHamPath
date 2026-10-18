@@ -2,8 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleWalkCost
-import SolidGridHam.Path.TwoVortex
+module
+
+public import SolidGridHam.Path.HoleWalkCost
+public import SolidGridHam.Path.TwoVortex
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Both endpoints inner
@@ -117,15 +122,6 @@ end k2
 
 /-! ## The final test -/
 
-def twoHoleFinalTest (U : Finset Pt) (s w t r q : Pt) (e0 e1 : Edge) : Bool :=
-  isNarrow U &&
-    match findFactor U (dST s w) with
-    | none => false
-    | some R => (classRange U).any fun h1 => (classRange U).any fun h2 =>
-        match classSearch U (insert e1 (insert e0 R)) [t, r] [h1, h2] with
-        | some G => twoPhantomLoop U t q (U.card + 2) G
-        | none => false
-
 section twoHoleFinalTest
 
 variable {Vo : Finset Pt} {t r w : Pt} {e0 : Edge} {U : Finset Pt} {s q : Pt} {e1 : Edge}
@@ -185,9 +181,6 @@ theorem twoHoleFinalTest_correct (hI : WS Vo t r w e0 U s q e1) (hrI : Inner Vo 
 end twoHoleFinalTest
 
 /-! ## Both endpoints inner -/
-
-def twoHoleCase (V : Finset Pt) (s t : Pt) : Bool :=
-  holeCase (fun w e0 U s' q e1 => twoHoleFinalTest U s' w t s q e0 e1) V s t
 
 section twoHoleCase
 

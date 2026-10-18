@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.PathComplete
-import SolidGridHam.Cycle.Timed.Alg
+module
+
+public import SolidGridHam.Cycle.PathComplete
+public import SolidGridHam.Cycle.Timed.Alg
+
+@[expose] public section
 
 /-!
 # Main theorem

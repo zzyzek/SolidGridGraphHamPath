@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Basic.Conn
+module
+
+public import SolidGridHam.Basic.Conn
+
+@[expose] public section
 
 /-!
 # The planar lemma for a cell

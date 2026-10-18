@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SheffCost
+module
+
+public import SolidGridHam.Path.SheffCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # All connections of a state at once
@@ -20,29 +25,12 @@ namespace HP
 
 open Finset Classical
 
-def compsAux (W : Finset Pt) (H : Finset Edge) : List Pt → Finset Pt → List (Finset Pt)
-  | [], _ => []
-  | x :: xs, cov =>
-    if x ∈ cov then compsAux W H xs cov
-    else ccls W H x :: compsAux W H xs (cov ∪ ccls W H x)
-
--- The points of `W` in lexicographic order.
---
-def ptList (W : Finset Pt) : List Pt := ((W.map toLex.toEmbedding).sort (· ≤ ·)).map ofLex
-
 lemma mem_ptList {W : Finset Pt} {x : Pt} : x ∈ ptList W ↔ x ∈ W := by
   unfold ptList
   simp only [List.mem_map, Finset.mem_sort, Finset.mem_map]
   constructor
   · rintro ⟨a, ⟨b, hb, rfl⟩, rfl⟩; exact hb
   · intro h; exact ⟨toLex x, ⟨x, h, rfl⟩, rfl⟩
-
-def comps (W : Finset Pt) (H : Finset Edge) : List (Finset Pt) := compsAux W H (ptList W) ∅
-
-def connectedPairs (W : Finset Pt) (H : Finset Edge) : Finset (Pt × Pt) :=
-  (comps W H).toFinset.biUnion fun C => C ×ˢ C
-
-def isConnected (S : Finset (Pt × Pt)) (x y : Pt) : Bool := decide ((x, y) ∈ S)
 
 section connectedPairs
 

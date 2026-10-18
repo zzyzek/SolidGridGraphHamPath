@@ -2,9 +2,14 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.CrPath
-import SolidGridHam.Cycle.Comp
-import SolidGridHam.Cycle.Phase2
+module
+
+public import SolidGridHam.Cycle.CrPath
+public import SolidGridHam.Cycle.Comp
+public import SolidGridHam.Cycle.Phase2
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Deciding strips and links
@@ -167,10 +172,6 @@ end enum
 section decide
 
 variable {V : Finset Pt} {F G : Finset Edge}
-
--- Connectivity, via the computed class.
---
-def connB (V : Finset Pt) (F : Finset Edge) (x y : Pt) : Bool := decide (y ∈ ccls V F x)
 
 lemma connB_iff (hFV : Inside V F) {x y : Pt} (hx : x ∈ V) (hy : y ∈ V) :
     connB V F x y = true ↔ Conn F x y := by

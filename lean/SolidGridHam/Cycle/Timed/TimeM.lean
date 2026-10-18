@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Algorithm
+module
+
+public import SolidGridHam.Cycle.Algorithm
+
+@[expose] public section
 
 /-!
 # Step counting: the monad and the counted basic operations

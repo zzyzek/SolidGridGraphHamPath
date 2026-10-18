@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Compat0
+module
+
+public import SolidGridHam.Path.Compat0
+
+@[expose] public section
 
 /-!
 # Overlap (docs/S4_UNDO.md §II.1)

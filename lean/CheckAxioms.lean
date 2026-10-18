@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam
+module
+
+public import SolidGridHam
+
+@[expose] public section
 
 /-! Axioms of the main results. Each should list only `propext`, `Classical.choice` and
 `Quot.sound`. Run with `lake env lean CheckAxioms.lean` from `lean/`. -/

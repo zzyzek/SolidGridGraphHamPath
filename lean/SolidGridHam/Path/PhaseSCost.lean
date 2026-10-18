@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.ReduceS
+module
+
+public import SolidGridHam.Path.ReduceS
+
+@[expose] public section
 
 /-!
 # Running time of the fast loop

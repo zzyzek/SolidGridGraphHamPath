@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.CostConn
-import SolidGridHam.Cycle.AlgComplete
+module
+
+public import SolidGridHam.Cycle.CostConn
+public import SolidGridHam.Cycle.AlgComplete
+
+@[expose] public section
 
 /-!
 # Running time, part 2: strips, links and the link graph's nodes

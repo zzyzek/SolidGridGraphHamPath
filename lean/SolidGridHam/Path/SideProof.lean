@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.ColProof
+module
+
+public import SolidGridHam.Path.ColProof
+
+@[expose] public section
 
 /-!
 # The side field `side` at the end of a phase (docs/COL_SIDE.md §5)

@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.S4RowSpec
+module
+
+public import SolidGridHam.Path.S4RowSpec
+
+@[expose] public section
 
 /-!
 # S4 for the merging-cell outcome, given a good cell

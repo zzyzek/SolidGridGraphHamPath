@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.PhaseSCost
+module
+
+public import SolidGridHam.Path.PhaseSCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # The fast two-phantom loop: `O(N³)` per round, `O(N⁴)` in all
@@ -31,11 +36,6 @@ def twoPhantomLoopCost (V : Finset Pt) (p q : Pt) : ℕ → Finset Edge → ℕ
           | (_, _, .fuel) => 0
           | (H, BS, out) => reducePiecesCost V (insert q (insert p V)) H BS out +
               twoPhantomLoopCost V p q n (reducePieces V (insert q (insert p V)) H BS out)
-
-def twoPhantomTest (V : Finset Pt) (s t p q : Pt) (e0 e1 : Edge) : Bool :=
-  match findFactor V (dST s t) with
-  | none => false
-  | some R => twoPhantomLoop V p q (V.card + 2) (insert e1 (insert e0 R))
 
 def twoPhantomTestCost (V : Finset Pt) (s t p q : Pt) (e0 e1 : Edge) : ℕ :=
   DFC.findFactorCost V (dST s t) + 1 +

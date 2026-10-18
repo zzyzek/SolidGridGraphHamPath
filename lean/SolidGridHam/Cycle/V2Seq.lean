@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Dual
+module
+
+public import SolidGridHam.Cycle.Dual
+
+@[expose] public section
 
 /-!
 # Theorem A2: sequences whose strips begin on the created boundary

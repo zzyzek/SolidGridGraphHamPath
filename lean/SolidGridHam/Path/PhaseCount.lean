@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.TriProof
-import SolidGridHam.Path.Prelim.RelPF
+module
+
+public import SolidGridHam.Path.TriProof
+public import SolidGridHam.Path.Prelim.RelPF
+
+@[expose] public section
 
 /-!
 # Each bridge step adds one piece

@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Cert
+module
+
+public import SolidGridHam.Path.Cert
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # L4 in a stuck state (the partner argument)
@@ -38,15 +43,6 @@ def Close1 (a b : Pt) : Prop := |a.1 - b.1| ≤ 1 ∧ |a.2 - b.2| ≤ 1
 -- The out-vertices are equal or at king distance at least 2.
 --
 def Far (t0 u0 : Pt) : Prop := t0 = u0 ∨ ¬ Close1 t0 u0
-
--- **Opposed phantoms.** The out-vertices `a`, `b` differ by 2 along an axis (and by at most 2
--- along the other), and their phantoms `ma`, `mb` point away from each other along that axis.
---
-def Opp (a ma b mb : Pt) : Prop :=
-  (b.1 - a.1 = 2 ∧ |b.2 - a.2| ≤ 2 ∧ ma = (a.1 - 1, a.2) ∧ mb = (b.1 + 1, b.2)) ∨
-  (b.1 - a.1 = -2 ∧ |b.2 - a.2| ≤ 2 ∧ ma = (a.1 + 1, a.2) ∧ mb = (b.1 - 1, b.2)) ∨
-  (b.2 - a.2 = 2 ∧ |b.1 - a.1| ≤ 2 ∧ ma = (a.1, a.2 - 1) ∧ mb = (b.1, b.2 + 1)) ∨
-  (b.2 - a.2 = -2 ∧ |b.1 - a.1| ≤ 2 ∧ ma = (a.1, a.2 + 1) ∧ mb = (b.1, b.2 - 1))
 
 lemma opp_symm {a ma b mb : Pt} (h : Opp a ma b mb) : Opp b mb a ma := by
   unfold Opp at *

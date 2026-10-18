@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HalfBridge
+module
+
+public import SolidGridHam.Path.HalfBridge
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Nodes of pairs along a phase (docs/S4_UNDO.md §I.2)
@@ -152,8 +157,6 @@ end nodes
 noncomputable def nodeI (H0 : Finset Edge) : List Bridge → Pt → Pt → ℕ
   | [], _, _ => 0
   | _ :: BS, x, y => if Conn (seqH H0 BS) x y then 0 else nodeI H0 BS x y + 1
-
-def rowStartPair (b : Bridge) : Pt × Pt := (back1 b.q b.a, front1 b.q b.a)
 
 -- The plan with its decisions and pending pairs.
 --

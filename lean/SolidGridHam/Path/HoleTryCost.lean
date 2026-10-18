@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleTry
+module
+
+public import SolidGridHam.Path.HoleTry
+
+@[expose] public section
 
 /-!
 # Hole classes: running time of `classSearchOne` (B-3, docs/HOLE_CLASSES.md §3.4)

@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Prelim.Endpoint
+module
+
+public import SolidGridHam.Path.Prelim.Endpoint
+
+@[expose] public section
 
 /-!
 # Strip counts for path-factors (notes: Lemma B, part 3)

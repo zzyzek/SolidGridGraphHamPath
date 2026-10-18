@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Height
-import SolidGridHam.Path.Shapes
+module
+
+public import SolidGridHam.Path.Height
+public import SolidGridHam.Path.Shapes
+
+@[expose] public section
 
 /-!
 # `FinalOK` from the shape of a final state

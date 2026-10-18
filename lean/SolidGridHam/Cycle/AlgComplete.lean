@@ -2,9 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Algorithm
-import SolidGridHam.Cycle.Counts
-import SolidGridHam.Cycle.NearCA
+module
+
+public import SolidGridHam.Cycle.Algorithm
+public import SolidGridHam.Cycle.Counts
+public import SolidGridHam.Cycle.NearCA
+
+@[expose] public section
 
 /-!
 # Completeness of the algorithm, conditional on path existence

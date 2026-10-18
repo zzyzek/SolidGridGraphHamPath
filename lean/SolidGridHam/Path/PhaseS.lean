@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.ConnSet
+module
+
+public import SolidGridHam.Path.ConnSet
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # The phase with connections computed once per step
@@ -32,34 +37,6 @@ lemma findSome?_congr {α β : Type*} {f g : α → Option β} :
     simp only [List.findSome?_cons]
     rw [h x (by simp), findSome?_congr (fun y hy => h y (by simp [hy]))]
 
-def isCutCell (S : Finset (Pt × Pt)) (c : Pt) : Bool :=
-  !(isConnected S c (c.1 + 1, c.2) && isConnected S c (c.1 + 1, c.2 + 1) && isConnected S c (c.1, c.2 + 1))
-
-def findMergingCell (V : Finset Pt) (S : Finset (Pt × Pt)) (H : Finset Edge) (BS : List Bridge) :
-    Option Pt :=
-  (cellList V).find? fun c => decide (Alt H c) && isCutCell S c && !pairSqB BS c
-
-def isCritical (S : Finset (Pt × Pt)) (H : Finset Edge) (q : Pt) (a : Side) : Bool :=
-  isConnected S (back1 q a) (back2 q a) && isConnected S (front1 q a) (front2 q a) &&
-    !isConnected S (back1 q a) (front1 q a) && decide (back q a ∈ H) && decide (front q a ∉ H)
-
-def scanRowAux (V : Finset Pt) (S : Finset (Pt × Pt)) (H : Finset Edge) (q : Pt) (a : Side)
-    (o : Bool) : ℕ → ℕ → Option RunEnd
-  | 0, _ => none
-  | fuel + 1, j =>
-    if outArc H (cellJ q a (j - 1)) a ≠ o then some (.row j)
-    else if ¬ IsCell V (cellJ q a j) ∨ isCutCell S (cellJ q a j) = true then some (.stuck j)
-    else scanRowAux V S H q a o fuel (j + 1)
-
-def scanRow (V : Finset Pt) (S : Finset (Pt × Pt)) (H : Finset Edge) (q : Pt) (a : Side) :
-    Option RunEnd :=
-  scanRowAux V S H q a (outArc H q a) (V.card + 1) 1
-
--- The squares of the bridges, as one set.
---
-def bridgeSquares (BS : List Bridge) : Finset Pt :=
-  (BS.flatMap fun b => (List.range b.r).map b.cell).toFinset
-
 lemma bridgeSquares_iff {BS : List Bridge} {q : Pt} : decide (q ∈ bridgeSquares BS) = bridgeSqB BS q := by
   by_cases h : bridgeSqB BS q = true
   · rw [h]
@@ -75,33 +52,6 @@ lemma bridgeSquares_iff {BS : List Bridge} {q : Pt} : decide (q ∈ bridgeSquare
     obtain ⟨b, hb, j, hj, hq⟩ := hm
     have := bridgeSqB_iff.2 ⟨b, hb, j, hj, hq.symm⟩
     rw [h] at this; exact absurd this (by simp)
-
-def rowOf (V : Finset Pt) (S : Finset (Pt × Pt)) (H : Finset Edge) (B : Finset Pt)
-    (x : Pt × Side) : Option Bridge :=
-  if isCritical S H x.1 x.2 && !decide (x.1 ∈ B) then
-    match scanRow V S H x.1 x.2 with
-    | some (.row r) => some ⟨x.1, x.2, r⟩
-    | _ => none
-  else none
-
-def findRow (V : Finset Pt) (S : Finset (Pt × Pt)) (H : Finset Edge) (BS : List Bridge) :
-    Option Bridge :=
-  let B := bridgeSquares BS
-  ((cellList V).flatMap fun q => sidesL.map fun a => (q, a)).findSome? (rowOf V S H B)
-
-def runPhase (V W : Finset Pt) : ℕ → Finset Edge → List Bridge → Finset Edge × List Bridge × POut
-  | 0, H, BS => (H, BS, .fuel)
-  | n + 1, H, BS =>
-    let S := connectedPairs W H
-    match findMergingCell V S H BS with
-    | some c => (H, BS, .merge c)
-    | none =>
-      match findRow V S H BS with
-      | none => (H, BS, .stuck)
-      | some b =>
-        if b.r % 2 = 1 then (H, BS, .odd b)
-        else if flipSplits W H b then runPhase V W n (flip H b.E) (b :: BS)
-        else (H, BS, .twist b)
 
 section eq
 

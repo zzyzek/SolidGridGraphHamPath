@@ -2,8 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleTwoVCost
-import SolidGridHam.Path.TwoPhWalkCost
+module
+
+public import SolidGridHam.Path.HoleTwoVCost
+public import SolidGridHam.Path.TwoPhWalkCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Hamiltonian `s`–`t` paths in solid grid graphs: decided in polynomial time
@@ -22,12 +27,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
--- `Inner`, decided.
---
-def isInner (V : Finset Pt) (p : Pt) : Bool :=
-  decide (IsCell V (p.1 - 1, p.2 - 1)) && decide (IsCell V (p.1, p.2 - 1)) &&
-    decide (IsCell V (p.1 - 1, p.2)) && decide (IsCell V p)
 
 lemma isInner_iff {V : Finset Pt} {p : Pt} : isInner V p = true ↔ Inner V p := by
   simp only [isInner, Inner, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
@@ -52,10 +51,6 @@ lemma miss_of_not_inner {V : Finset Pt} {p : Pt} (hp : ¬ Inner V p) :
     simpa using this
   refine ⟨⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_⟩, ⟨?_, ?_, ?_, ?_⟩⟩ <;>
     apply g <;> simp
-
-def decideHamPath (V : Finset Pt) (s t : Pt) : Bool :=
-  if isInner V s then (if isInner V t then twoHoleCase V s t else oneHoleCase V t s)
-  else if isInner V t then oneHoleCase V s t else boundaryEndpoints V s t
 
 noncomputable def decideHamPathCost (V : Finset Pt) (s t : Pt) : ℕ :=
   10 + if isInner V s then (if isInner V t then twoHoleCaseCost V s t else oneHoleCaseCost V t s)
@@ -105,6 +100,14 @@ theorem decideHamPath_main (hs : Solid V) (hst : s ≠ t) (hsV : s ∈ V) (htV :
       rw [ite_eq_right ht1, ite_eq_right ht1]
       obtain ⟨c1, c2⟩ := boundaryEndpoints_main hs hst hsV htV hsm htm
       exact ⟨c1, by omega⟩
+
+-- **Correctness alone** (the statement registered with Palomar, `Challenge.lean`): for solid `V`
+-- and distinct `s, t ∈ V`, `decideHamPath V s t = true` exactly when `V` has a Hamiltonian
+-- `s`–`t` path.
+--
+theorem decideHamPath_correct (hs : Solid V) (hst : s ≠ t) (hsV : s ∈ V) (htV : t ∈ V) :
+    decideHamPath V s t = true ↔ ∃ H, IsFactor V (dST s t) H ∧ ncomp V H = 1 :=
+  (decideHamPath_main hs hst hsV htV).1
 
 end final
 

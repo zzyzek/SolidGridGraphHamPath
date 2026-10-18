@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Walk
+module
+
+public import SolidGridHam.Cycle.Walk
+
+@[expose] public section
 
 /-!
 # Phase I: the walk along a border terminates at a stop cell

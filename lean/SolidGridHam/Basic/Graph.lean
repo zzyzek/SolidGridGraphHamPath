@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Basic.Planar
+module
+
+public import SolidGridHam.Basic.Planar
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Counting components
@@ -85,10 +90,6 @@ lemma conn_insert_of_conn {F : Finset Edge} {e : Edge} (h : Conn F e.p e.q) (x y
   · exact fun h' => Or.inl h'
 
 /-! ## Classes and the count -/
-
-noncomputable def cls (V : Finset Pt) (F : Finset Edge) (x : Pt) : Finset Pt := V.filter (Conn F x)
-
-noncomputable def ncomp (V : Finset Pt) (F : Finset Edge) : ℕ := (V.image (cls V F)).card
 
 lemma ncomp_congr {V : Finset Pt} {F F' : Finset Edge}
     (h : ∀ x ∈ V, ∀ y ∈ V, Conn F x y ↔ Conn F' x y) : ncomp V F = ncomp V F' := by
@@ -396,10 +397,6 @@ lemma inc_unique {F : Finset Edge} {y : Pt} (hd : deg F y = 1) {e e' : Edge} (he
 lemma Edge.p_ne_q (e : Edge) : e.p ≠ e.q := by
   obtain ⟨d, p1, p2⟩ := e
   cases d <;> simp [Edge.q]
-
--- The other end of `e` from `y`.
---
-def other (e : Edge) (y : Pt) : Pt := if e.p = y then e.q else e.p
 
 lemma adj_other {F : Finset Edge} {e : Edge} (he : e ∈ F) {y : Pt} (hy : e.p = y ∨ e.q = y) :
     Adj F y (other e y) := by

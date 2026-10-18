@@ -2,10 +2,14 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Timed.Strips
-import SolidGridHam.Cycle.Timed.MinPath
-import SolidGridHam.Cycle.Timed.TwoFactor
-import SolidGridHam.Cycle.CostAlg
+module
+
+public import SolidGridHam.Cycle.Timed.Strips
+public import SolidGridHam.Cycle.Timed.MinPath
+public import SolidGridHam.Cycle.Timed.TwoFactor
+public import SolidGridHam.Cycle.CostAlg
+
+@[expose] public section
 
 /-!
 # The counted algorithm

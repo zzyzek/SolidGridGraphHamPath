@@ -2,19 +2,23 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.NearCA
-import SolidGridHam.Cycle.NearLemma
-import SolidGridHam.Cycle.NearGeo
-import SolidGridHam.Cycle.NearChain
-import SolidGridHam.Cycle.Touch
-import SolidGridHam.Cycle.L57
-import SolidGridHam.Cycle.Near
-import SolidGridHam.Path.Prelim.RelPF
-import SolidGridHam.Cycle.PathComplete
-import SolidGridHam.Cycle.Algorithm
-import SolidGridHam.Cycle.Phase2
-import SolidGridHam.Path.Prelim.TheoremAPF
-import SolidGridHam.Cycle.Stacked
+module
+
+public import SolidGridHam.Cycle.NearCA
+public import SolidGridHam.Cycle.NearLemma
+public import SolidGridHam.Cycle.NearGeo
+public import SolidGridHam.Cycle.NearChain
+public import SolidGridHam.Cycle.Touch
+public import SolidGridHam.Cycle.L57
+public import SolidGridHam.Cycle.Near
+public import SolidGridHam.Path.Prelim.RelPF
+public import SolidGridHam.Cycle.PathComplete
+public import SolidGridHam.Cycle.Algorithm
+public import SolidGridHam.Cycle.Phase2
+public import SolidGridHam.Path.Prelim.TheoremAPF
+public import SolidGridHam.Cycle.Stacked
+
+@[expose] public section
 
 /-!
 # `comp_clean` for path-factors with rule Tg

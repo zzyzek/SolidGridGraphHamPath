@@ -2,9 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Enum
-import SolidGridHam.Cycle.L57
-import SolidGridHam.Cycle.Created
+module
+
+public import SolidGridHam.Cycle.Enum
+public import SolidGridHam.Cycle.L57
+public import SolidGridHam.Cycle.Created
+
+@[expose] public section
 
 /-!
 # Near contacts with the first strip

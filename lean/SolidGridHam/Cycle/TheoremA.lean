@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Phase2
+module
+
+public import SolidGridHam.Cycle.Phase2
+
+@[expose] public section
 
 /-!
 # Theorem A: alternating strip sequences exist (thesis Lemmas 6.6, 6.7, Theorem 6.1)

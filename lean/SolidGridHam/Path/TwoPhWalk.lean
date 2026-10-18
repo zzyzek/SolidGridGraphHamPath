@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.LoopF
+module
+
+public import SolidGridHam.Path.LoopF
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Two phantoms: the deletion walk (docs/ENDPOINTS_GENERAL.md, route A2)
@@ -164,21 +169,10 @@ theorem hp_two (hst : s ≠ t) (hsV : s ∈ V) (htV : t ∈ V) (h2 : V.card ≤ 
 
 end del
 
--- `Far`, decided (king distance at least 2).
---
-def isFar (t s : Pt) : Bool :=
-  decide (t = s) || !(decide (|t.1 - s.1| ≤ 1) && decide (|t.2 - s.2| ≤ 1))
-
 lemma isFar_iff {t s : Pt} : isFar t s = true ↔ Far t s := by
   unfold isFar Far Close1
   simp only [Bool.or_eq_true, decide_eq_true_eq, Bool.not_eq_true', Bool.and_eq_false_iff,
     decide_eq_false_iff_not, not_and_or]
-
-instance (a ma b mb : Pt) : Decidable (Opp a ma b mb) := by unfold Opp; infer_instance
-
--- Opposed phantoms, decided.
---
-def phantomsOpposed (a ma b mb : Pt) : Bool := decide (Opp a ma b mb)
 
 lemma opp_close {a ma b mb : Pt} (h : Opp a ma b mb) : Close a b := by
   unfold Opp at h; unfold Close
@@ -263,32 +257,11 @@ lemma ringc_erase_lt {V : Finset Pt} {s t : Pt} (htV : t ∈ V) (hts : t ≠ s) 
   rw [Finset.ssubset_iff_of_subset (Finset.filter_subset_filter _ (Finset.erase_subset _ _))]
   exact ⟨t, Finset.mem_filter.2 ⟨htV, hts, hc⟩, by simp⟩
 
--- A usable phantom for `t`: a missing lattice neighbour, not `s`'s phantom `q`, not opposed.
---
-def isUsablePhantom (V : Finset Pt) (s q t : Pt) (x : Pt × Edge) : Bool :=
-  decide (x.1 ∉ V) && decide (x.1 ≠ q) && !phantomsOpposed t x.1 s q
-
 -- The walk measure.
 --
 noncomputable def wmu (V : Finset Pt) (s q t : Pt) : ℕ :=
   ringc V s + (if (∃ x ∈ nbrsL t, x.1 ∉ V) then 0 else 2) +
     (if (∃ x ∈ nbrsL t, isUsablePhantom V s q t x = true) then 0 else 1)
-
--- **The walk.** `s` keeps its phantom `q` (edge `e1`); `t` moves until it is Far from `s` and has
--- a usable phantom.
---
-def boundaryEndpointsWalk (s q : Pt) (e1 : Edge) : ℕ → Finset Pt → Pt → Bool
-  | 0, _, _ => false
-  | n + 1, V, t =>
-    if V.card ≤ 2 then (nbrsL t).any (fun x => decide (x.1 = s))
-    else
-      match (nbrsL t).find? (isUsablePhantom V s q t) with
-      | some x =>
-        if isFar t s then twoPhantomTest V s t x.1 q x.2 e1
-        else (nbrsL t).any (fun x => decide (x.1 ∈ V) && decide (x.1 ≠ s) &&
-          boundaryEndpointsWalk s q e1 n (V.erase t) x.1)
-      | none => (nbrsL t).any (fun x => decide (x.1 ∈ V) && decide (x.1 ≠ s) &&
-          boundaryEndpointsWalk s q e1 n (V.erase t) x.1)
 
 -- The walk's invariant.
 --
@@ -417,17 +390,6 @@ end walk
 lemma wmu_le (V : Finset Pt) (s q t : Pt) : wmu V s q t ≤ 11 := by
   have := ringc_le V s
   unfold wmu; split_ifs <;> omega
-
--- **Two boundary endpoints.** If `s` has a missing neighbour, walk with it as `s`'s phantom;
--- otherwise delete `s` once first.
---
-def boundaryEndpoints (V : Finset Pt) (s t : Pt) : Bool :=
-  if V.card ≤ 2 then (nbrsL t).any (fun x => decide (x.1 = s))
-  else
-    match (nbrsL s).find? (fun x => decide (x.1 ∉ V)) with
-    | some x => boundaryEndpointsWalk s x.1 x.2 12 V t
-    | none => (nbrsL s).any (fun x => decide (x.1 ∈ V) && decide (x.1 ≠ t) &&
-        boundaryEndpointsWalk x.1 s x.2 12 (V.erase s) t)
 
 section boundaryEndpoints
 

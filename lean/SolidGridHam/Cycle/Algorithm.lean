@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.LinkGraph
+module
+
+public import SolidGridHam.Cycle.LinkGraph
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # The algorithm
@@ -19,19 +24,12 @@ namespace SolidGridHam
 
 open Finset
 
--- The cells of `V`, listed (lexicographic order on points).
---
-def cellList (V : Finset Pt) : List Pt :=
-  (((V.filter (IsCell V)).map toLex.toEmbedding).sort (· ≤ ·)).map ofLex
-
 lemma mem_cellList {V : Finset Pt} {d : Pt} : d ∈ cellList V ↔ d ∈ V ∧ IsCell V d := by
   unfold cellList
   simp only [List.mem_map, Finset.mem_sort, Finset.mem_map, Finset.mem_filter]
   constructor
   · rintro ⟨y, ⟨x, hx, rfl⟩, rfl⟩; exact hx
   · intro h; exact ⟨toLex d, ⟨d, h, rfl⟩, rfl⟩
-
-def sidesL : List Side := [.b, .t, .l, .r]
 
 lemma mem_sidesL (tf : Side) : tf ∈ sidesL := by cases tf <;> simp [sidesL]
 

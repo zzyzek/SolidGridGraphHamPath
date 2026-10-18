@@ -2,12 +2,16 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Prelim.Dangle
-import SolidGridHam.Cycle.Comp
-import SolidGridHam.Cycle.Enum
-import SolidGridHam.Path.Prelim.StripCountPF
-import SolidGridHam.Cycle.Phase2
-import SolidGridHam.Path.Prelim.TheoremAPF
+module
+
+public import SolidGridHam.Path.Prelim.Dangle
+public import SolidGridHam.Cycle.Comp
+public import SolidGridHam.Cycle.Enum
+public import SolidGridHam.Path.Prelim.StripCountPF
+public import SolidGridHam.Cycle.Phase2
+public import SolidGridHam.Path.Prelim.TheoremAPF
+
+@[expose] public section
 
 /-!
 # A notch endpoint: the path's end moved to a missing neighbour

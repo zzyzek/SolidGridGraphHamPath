@@ -440,7 +440,7 @@ The four edges of a square are its \emph{sides}, named bottom, top, left and rig
 \label{def:solid}
 A point $a\notin V$ is a \emph{missing point}.
 $V$ is \emph{solid} when every missing point is joined, by a sequence of king moves through
-missing points, to a point strictly left of all of $V$ (Lean \lean{Solid}, \lean{Grid.lean}).
+missing points, to a point strictly left of all of $V$ (Lean \lean{Solid}, \lean{Algorithm.lean}).
 \end{definition}
 
 \Cref{fig:solid} shows a solid set and a set that is not solid.
@@ -485,7 +485,7 @@ An edge of $V$ not in $H$ is called \emph{light}.
 Every run starts from some factor with prescribed degrees $d\le2$.
 The grid graph is bipartite, so such a factor is an integral maximum flow in the standard
 source--black--white--sink network, with capacity $d$ at the points and $1$ on the edges.
-\lean{findFactor} (\lean{FindFactor.lean}, \cref{alg:findFactor}) runs the Ford--Fulkerson method on
+\lean{findFactor} (\lean{Algorithm.lean}, \cref{alg:findFactor}) runs the Ford--Fulkerson method on
 this network, with at most $|V|+1$ augmentations and every choice fixed.
 It returns a factor when one exists (\lean{findFactor\_some}), and returns none only when no factor
 exists (\lean{findFactor\_none}), at cost $O((|V|+1)^3)$ (\lean{DFC.findFactorCost\_le}).
@@ -672,8 +672,8 @@ factors).
 A \emph{frame} of a cell $c$ is a choice of one of its sides as the \emph{front}.
 The opposite side is the \emph{back}, and the other two are the \emph{laterals}.
 The corners on the back are $b_1,b_2$ and those on the front are $f_1,f_2$, with laterals
-$b_1f_1$ and $b_2f_2$ (Lean \lean{back}, \lean{front}, \lean{lat1}, \lean{lat2},
-\lean{back1}, \lean{front1}, \lean{Strip.lean}).
+$b_1f_1$ and $b_2f_2$ (Lean \lean{back}, \lean{front}, \lean{lat1}, \lean{back1}, \lean{front1} in
+\lean{Algorithm.lean}, \lean{lat2} in \lean{Strip.lean}).
 The $j$-th cell of the strip from $c$ in the direction of its front is $c_j$, with $c_0=c$ (Lean
 \lean{cellJ}).
 \end{definition}
@@ -1338,7 +1338,7 @@ The factor is $G=F\oplus X_\varphi$ where $X_\varphi$ is the set of edges of $V'
 $\varphi$ jumps, and $D(F,G)=2\varphi$.
 Prescribing $\varphi(t)=h$ adds one more difference constraint.
 \lean{classSearch} relaxes from below to the least admissible potential with the prescribed values, checks
-it, and returns $F\oplus X_\varphi$ (\lean{HoleTry.lean}, \lean{HoleRelax.lean}).
+it, and returns $F\oplus X_\varphi$ (\lean{Algorithm.lean}).
 \lean{classSearchOne}~$V'\ F\ t\ h$ is \lean{classSearch} with one prescribed value.
 
 \paragraph{How the relaxation runs.}
@@ -1437,7 +1437,7 @@ Classes lie in $[-|V'|,|V'|]$, so the list \lean{classRange} of $2|V'|+1$ values
 Let $t$ be inner and let $s$ have a missing king neighbour.
 The two-phantom core needs the out-vertices $w$ and $s$ Far with phantoms that are not opposed,
 and $s$ needs a phantom.
-Both come from deletions on the $s$ side (\lean{holeCase}, \lean{holeCaseWalk}, \lean{HoleWalk.lean}).
+Both come from deletions on the $s$ side (\lean{holeCase}, \lean{holeCaseWalk}, \lean{Algorithm.lean}).
 \begin{enumerate}
 \item Delete $t$ and branch over its neighbour $w\ne s$ (the last edge of the path).
   The phantom of $w$ is $t$.
@@ -1725,8 +1725,9 @@ No file of the library contains \lean{sorry}, and the build has no warnings.
 Lean checks every step of the proof.
 The reader must check that the statement means what it should.
 The definitions in the statement are \lean{Pt} ($\Z\times\Z$), \lean{Edge}, \lean{IsEdge},
-\lean{deg}, \lean{IsFactor} (\lean{Grid.lean}), \lean{dST} (\lean{StartPF.lean}), \lean{ncomp}
-(\lean{Graph.lean}) and \lean{Solid} (\lean{Grid.lean}).
+\lean{deg}, \lean{IsFactor}, \lean{dST}, \lean{ncomp} and \lean{Solid}.
+They are in \lean{Algorithm.lean}, together with every definition of the algorithm, so one file holds
+everything the statement depends on.
 The definition of \lean{Solid} was also cross-checked by computation against ``all interior faces
 have unit area''.
 For the step bound the reader must also check that \lean{decideHamPathCost} and the cost functions it calls

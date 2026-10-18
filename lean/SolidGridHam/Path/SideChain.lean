@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.MoveInv
+module
+
+public import SolidGridHam.Path.MoveInv
+
+@[expose] public section
 
 /-!
 # The chain lemma: side columns become strips

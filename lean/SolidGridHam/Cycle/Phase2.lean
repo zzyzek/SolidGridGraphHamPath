@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Phase
+module
+
+public import SolidGridHam.Cycle.Phase
+
+@[expose] public section
 
 /-!
 # Phase II: the strip from a stop cell, and its effect on `μ`

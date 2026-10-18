@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.NearChain
+module
+
+public import SolidGridHam.Cycle.NearChain
+
+@[expose] public section
 
 /-!
 # Touch analysis for strips that keep off the previous end cell

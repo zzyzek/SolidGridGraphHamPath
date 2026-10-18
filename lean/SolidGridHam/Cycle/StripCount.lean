@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Strip
+module
+
+public import SolidGridHam.Cycle.Strip
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Flipping a strip: the component count (thesis Lemmas 5.4, 5.5)
@@ -28,10 +33,6 @@ def StripPat (F : Finset Edge) (c : Pt) (s : Side) (n : ℕ) : Prop :=
   back c s ∈ F ∧
   (∀ j < n, (lat1 (cellJ c s j) s ∈ F ↔ j % 2 = 1) ∧ (lat2 (cellJ c s j) s ∈ F ↔ j % 2 = 1)) ∧
   (∀ j < n, (front (cellJ c s j) s ∈ F ↔ (j % 2 = 1 ↔ j + 1 < n)))
-
-def flipCol (F : Finset Edge) (c : Pt) (s : Side) : ℕ → Finset Edge
-  | 0 => F
-  | n + 1 => flipCol (flip F (cellJ c s n)) c s n
 
 /-! ## Edge-set bookkeeping -/
 

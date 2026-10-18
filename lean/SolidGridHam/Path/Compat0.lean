@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Reduce
+module
+
+public import SolidGridHam.Path.Reduce
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Lemma 4 infrastructure
@@ -18,10 +23,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
-def lowJ (b : Bridge) : Join := ⟨b.q, b.a, b.r - 1⟩
-
-def undoJ (b : Bridge) : Join := ⟨b.E, b.a, 1⟩
 
 lemma plan_eq (H : Finset Edge) : ∀ (BS : List Bridge) (uv : Pt × Pt),
     plan H BS uv = List.zipWith (fun b e => if e.1 then lowJ b else undoJ b) BS (planA H BS uv)

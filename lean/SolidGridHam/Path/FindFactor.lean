@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.StripCount
+module
+
+public import SolidGridHam.Cycle.StripCount
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # A verified d-factor algorithm for grid graphs (degree caps at most 2)
@@ -26,108 +31,11 @@ variable {d : Pt → ℕ}
 
 /-! ## Colours, incident edges, steps -/
 
--- Black points have an even coordinate sum.
---
-def Black (z : Pt) : Prop := (z.1 + z.2) % 2 = 0
-
-instance (z : Pt) : Decidable (Black z) := by unfold Black; infer_instance
-
--- The four edges at a point, as a list (searched in this order).
---
-def inc4 (z : Pt) : List Edge := [eR z, eL z, eU z, eD z]
-
--- A forward alternating step from `u` along `e`: a grid edge, not in `F` when `u` is
--- black, in `F` when `u` is white.
---
-def Fwd (V : Finset Pt) (F : Finset Edge) (u : Pt) (e : Edge) : Prop :=
-  IsEdge V e ∧ (Black u → e ∉ F) ∧ (¬ Black u → e ∈ F)
-
-instance (V : Finset Pt) (F : Finset Edge) (u : Pt) (e : Edge) : Decidable (Fwd V F u e) := by
-  unfold Fwd; infer_instance
-
--- The points one forward step from `u`.
---
-def nbr (V : Finset Pt) (F : Finset Edge) (u : Pt) : Finset Pt :=
-  (((inc4 u).filter (fun e => decide (Fwd V F u e))).map (fun e => other e u)).toFinset
-
--- The alternating layers: layer `k` holds the points reachable in at most `k` steps from
--- a deficient black point.
---
-def layer (V : Finset Pt) (d : Pt → ℕ) (F : Finset Edge) : ℕ → Finset Pt
-  | 0 => V.filter (fun z => Black z ∧ deg F z < d z)
-  | k + 1 =>
-    let L := layer V d F k
-    L ∪ L.biUnion (nbr V F)
-
--- A backward step from `v` along `e` into `L`: the reverse of a forward step from
--- `other e v ∈ L`.
---
-def Bwd (V : Finset Pt) (F : Finset Edge) (L : Finset Pt) (v : Pt) (e : Edge) : Prop :=
-  IsEdge V e ∧ other e v ∈ L ∧ (Black v → e ∈ F) ∧ (¬ Black v → e ∉ F)
-
-instance (V : Finset Pt) (F : Finset Edge) (L : Finset Pt) (v : Pt) (e : Edge) :
-    Decidable (Bwd V F L v e) := by
-  unfold Bwd; infer_instance
-
--- The first backward step from `v` into `L`, if any.
---
-def pred (V : Finset Pt) (F : Finset Edge) (L : Finset Pt) (v : Pt) : Option Edge :=
-  (inc4 v).find? (fun e => decide (Bwd V F L v e))
-
 -- The layers below index `k`, top first: `[layer (k-1), ..., layer 0]` (specification).
 --
 def layersBelow (V : Finset Pt) (d : Pt → ℕ) (F : Finset Edge) : ℕ → List (Finset Pt)
   | 0 => []
   | k + 1 => layer V d F k :: layersBelow V d F k
-
--- The same layers computed bottom up, each from the previous one only once:
--- `layerAcc V d F k = [layer k, layer (k-1), ..., layer 0]` (`layerAcc_eq`).
---
-def layerAcc (V : Finset Pt) (d : Pt → ℕ) (F : Finset Edge) : ℕ → List (Finset Pt)
-  | 0 => [V.filter (fun z => Black z ∧ deg F z < d z)]
-  | k + 1 =>
-    match layerAcc V d F k with
-    | [] => []
-    | L :: Ls => (L ∪ L.biUnion (nbr V F)) :: L :: Ls
-
--- Walk back from `v` down the layers `Ls` (top first), flipping the crossed edges of `F`.
--- `F0` is the edge set the layers were built from. One list entry is consumed per step.
---
-def walk (V : Finset Pt) (F0 : Finset Edge) :
-    List (Finset Pt) → Pt → Finset Edge → Finset Edge
-  | [], _, F => F
-  | L :: Ls, v, F =>
-    if v ∈ L then walk V F0 Ls v F
-    else
-      match pred V F0 L v with
-      | none => F
-      | some e => walk V F0 Ls (other e v) (if Black v then F.erase e else insert e F)
-
--- A computable choice of an element of a finite set of points (the lexicographic least).
---
-def pick (S : Finset Pt) : Option Pt :=
-  match (S.image toLex).min with
-  | ⊤ => none
-  | (x : Lex (ℤ × ℤ)) => some (ofLex x)
-
--- One augmentation: `none` when no deficient white point is reachable.
---
-def augStep (V : Finset Pt) (d : Pt → ℕ) (F : Finset Edge) : Option (Finset Edge) :=
-  match layerAcc V d F V.card with
-  | [] => none
-  | L :: Ls =>
-    match pick (L.filter (fun w => ¬ Black w ∧ deg F w < d w)) with
-    | none => none
-    | some w => some (walk V F Ls w F)
-
--- Augment at most `n` times.
---
-def augLoop (V : Finset Pt) (d : Pt → ℕ) : ℕ → Finset Edge → Finset Edge
-  | 0, F => F
-  | n + 1, F =>
-    match augStep V d F with
-    | none => F
-    | some F' => augLoop V d n F'
 
 /-! ## Basic lemmas -/
 
@@ -748,13 +656,6 @@ lemma augLoop_final (V : Finset Pt) (hd2 : ∀ z, d z ≤ 2) :
 end DF
 
 open DF
-
--- **A verified d-factor algorithm** (degree caps at most 2): augment from the empty set, then
--- check.
---
-def findFactor (V : Finset Pt) (d : Pt → ℕ) : Option (Finset Edge) :=
-  let F := augLoop V d (V.card + 1) ∅
-  if ∀ z ∈ V, deg F z = d z then some F else none
 
 theorem findFactor_some {V : Finset Pt} {d : Pt → ℕ} (hd2 : ∀ z, d z ≤ 2) {F : Finset Edge}
     (h : findFactor V d = some F) : IsFactor V d F := by

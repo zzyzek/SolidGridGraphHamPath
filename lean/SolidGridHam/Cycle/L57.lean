@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Chain
+module
+
+public import SolidGridHam.Cycle.Chain
+
+@[expose] public section
 
 /-!
 # Lemma 5.7: after an even strip, a Type III cell (if any) lies on the created chain

@@ -2,17 +2,21 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SheffComp
-import SolidGridHam.Cycle.CostAlg
-import SolidGridHam.Cycle.CostMinPath
-import SolidGridHam.Path.Prelim.ZeroPF
-import SolidGridHam.Path.Prelim.CompCleanTg
-import SolidGridHam.Cycle.Phase2
-import SolidGridHam.Path.Prelim.TheoremAPF
-import SolidGridHam.Cycle.Comp
-import SolidGridHam.Cycle.Enum
-import SolidGridHam.Path.Prelim.StripCountPF
-import SolidGridHam.Path.FindFactorCost
+module
+
+public import SolidGridHam.Path.SheffComp
+public import SolidGridHam.Cycle.CostAlg
+public import SolidGridHam.Cycle.CostMinPath
+public import SolidGridHam.Path.Prelim.ZeroPF
+public import SolidGridHam.Path.Prelim.CompCleanTg
+public import SolidGridHam.Cycle.Phase2
+public import SolidGridHam.Path.Prelim.TheoremAPF
+public import SolidGridHam.Cycle.Comp
+public import SolidGridHam.Cycle.Enum
+public import SolidGridHam.Path.Prelim.StripCountPF
+public import SolidGridHam.Path.FindFactorCost
+
+@[expose] public section
 
 /-!
 # Running time of the decided Sheffield loop, part 1: the phase

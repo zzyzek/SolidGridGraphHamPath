@@ -2,9 +2,13 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.Algorithm
-import SolidGridHam.Cycle.Phase2
-import SolidGridHam.Path.Prelim.TheoremAPF
+module
+
+public import SolidGridHam.Cycle.Algorithm
+public import SolidGridHam.Cycle.Phase2
+public import SolidGridHam.Path.Prelim.TheoremAPF
+
+@[expose] public section
 
 /-!
 # Zeros at the endpoints' cells

@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Basic.D
+module
+
+public import SolidGridHam.Basic.D
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Connectivity of an edge set, and flows of vertex chains
@@ -17,11 +22,6 @@ topology used for the split rule in `Flip.lean`.
 -/
 
 namespace SolidGridHam
-
-def Adj (F : Finset Edge) (a b : Pt) : Prop :=
-  ∃ e ∈ F, (e.p = a ∧ e.q = b) ∨ (e.p = b ∧ e.q = a)
-
-def Conn (F : Finset Edge) : Pt → Pt → Prop := Relation.ReflTransGen (Adj F)
 
 lemma Adj.symm {F : Finset Edge} {a b : Pt} (h : Adj F a b) : Adj F b a := by
   obtain ⟨e, he, h⟩ := h; exact ⟨e, he, h.symm⟩

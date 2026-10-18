@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Overlap
+module
+
+public import SolidGridHam.Path.Overlap
+
+@[expose] public section
 
 /-!
 # Lemma 4, (C1) for the undo operations

@@ -2,10 +2,14 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Column
-import SolidGridHam.Path.FinalLocal
-import SolidGridHam.Cycle.L57
-import SolidGridHam.Path.Prelim.TheoremAPF
+module
+
+public import SolidGridHam.Path.Column
+public import SolidGridHam.Path.FinalLocal
+public import SolidGridHam.Cycle.L57
+public import SolidGridHam.Path.Prelim.TheoremAPF
+
+@[expose] public section
 
 /-!
 # The generalized move: edges and pieces after the move

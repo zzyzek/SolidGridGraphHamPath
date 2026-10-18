@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.ChainLinks
-import SolidGridHam.Cycle.MinPath
+module
+
+public import SolidGridHam.Cycle.ChainLinks
+public import SolidGridHam.Cycle.MinPath
+
+@[expose] public section
 
 /-!
 # The link graph
@@ -364,9 +368,11 @@ around cells `(0, 0)` and `(2, 0)`. Flipping the middle cell `(1, 0)` (a strip o
 cell) joins them, so the minimum path is a single strip with one cell.
 -/
 
-#eval
-  let V : Finset Pt := (Finset.range 4 ×ˢ Finset.range 2).image fun q => ((q.1 : ℤ), (q.2 : ℤ))
-  let G : Finset Edge := cellE (0, 0) ∪ cellE (2, 0)
-  (findPath V G).map fun r => (r.1.c, sideIdx r.1.s, r.1.n, r.2.length)
+-- To run it, in a scratch file that imports `SolidGridHam`:
+--
+-- #eval
+--   let V : Finset Pt := (Finset.range 4 ×ˢ Finset.range 2).image fun q => ((q.1 : ℤ), (q.2 : ℤ))
+--   let G : Finset Edge := cellE (0, 0) ∪ cellE (2, 0)
+--   (findPath V G).map fun r => (r.1.c, sideIdx r.1.s, r.1.n, r.2.length)
 
 end SolidGridHam

@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.Taut
-import SolidGridHam.Path.Prelim.ZeroPF
+module
+
+public import SolidGridHam.Path.Taut
+public import SolidGridHam.Path.Prelim.ZeroPF
+
+@[expose] public section
 
 /-!
 # Columns and the generalized move (repaired §4.8)

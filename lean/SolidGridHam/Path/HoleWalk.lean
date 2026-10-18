@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleOneCost
+module
+
+public import SolidGridHam.Path.HoleOneCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # An inner endpoint, the other on the boundary: the walk on the `s` side
@@ -317,17 +322,6 @@ end ws
 
 /-! ## The walk, for any final test -/
 
--- `fin U s q e1` decides the problem on `U` from `s` to `w` when `w` and `s` are far apart.
---
-def holeCaseWalk (fin : Finset Pt → Pt → Pt → Edge → Bool) (w pw : Pt) :
-    ℕ → Finset Pt → Pt → Pt → Edge → Bool
-  | 0, _, _, _, _ => false
-  | n + 1, U, s, q, e1 =>
-    if U.card ≤ 2 then (nbrsL w).any (fun x => decide (x.1 = s))
-    else if isFar w s && !phantomsOpposed w pw s q then fin U s q e1
-    else (nbrsL s).any (fun x => decide (x.1 ∈ U) && decide (x.1 ≠ w) &&
-      holeCaseWalk fin w pw n (U.erase s) x.1 s x.2)
-
 -- The walk measure: points of `U` in the ring around `w`, plus one while `s`'s phantom is not
 -- within king distance 2 of `w` (only possible at the start).
 --
@@ -397,16 +391,6 @@ theorem holeCaseWalk_correct
 
 end walk
 
--- Delete `t` (branch over `w`), delete `s` (branch over its successor), then walk.
---
-def holeCase (fin : Pt → Edge → Finset Pt → Pt → Pt → Edge → Bool) (V : Finset Pt) (s t : Pt) :
-    Bool :=
-  if V.card ≤ 2 then (nbrsL t).any (fun x => decide (x.1 = s))
-  else (nbrsL t).any fun y => decide (y.1 ∈ V) && decide (y.1 ≠ s) &&
-    if (V.erase t).card ≤ 2 then (nbrsL y.1).any (fun x => decide (x.1 = s))
-    else (nbrsL s).any fun x => decide (x.1 ∈ V.erase t) && decide (x.1 ≠ y.1) &&
-      holeCaseWalk (fin y.1 y.2) y.1 t 10 ((V.erase t).erase s) x.1 s x.2
-
 section holeCase
 
 variable {V : Finset Pt} {s t : Pt} {fin : Pt → Edge → Finset Pt → Pt → Pt → Edge → Bool}
@@ -468,17 +452,6 @@ end holeCase
 
 /-! ## One hole: the two-phantom hole run -/
 
--- Per class (`classRange`) the factor `classSearchOne` returns, then the two-phantom loop.
---
-def oneHoleFinalTest (U : Finset Pt) (s w t q : Pt) (e0 e1 : Edge) : Bool :=
-  isNarrow U &&
-    match findFactor U (dST s w) with
-    | none => false
-    | some R => (classRange U).any fun h =>
-        match classSearchOne U (insert e1 (insert e0 R)) t h with
-        | some G => twoPhantomLoop U t q (U.card + 2) G
-        | none => false
-
 section oneHoleFinalTest
 
 variable {Vo : Finset Pt} {t r w : Pt} {e0 : Edge} {U : Finset Pt} {s q : Pt} {e1 : Edge}
@@ -537,9 +510,6 @@ theorem oneHoleFinalTest_correct (hI : WS Vo t r w e0 U s q e1)
 end oneHoleFinalTest
 
 /-! ## An inner endpoint, the other with a missing king neighbour -/
-
-def oneHoleCase (V : Finset Pt) (s t : Pt) : Bool :=
-  holeCase (fun w e0 U s' q e1 => oneHoleFinalTest U s' w t q e0 e1) V s t
 
 section oneHoleCase
 

@@ -2,11 +2,15 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.NoMid
-import SolidGridHam.Path.Reduce
-import SolidGridHam.Path.PhaseCount
-import SolidGridHam.Path.Cert
-import SolidGridHam.Path.Prelim.NotchPF
+module
+
+public import SolidGridHam.Path.NoMid
+public import SolidGridHam.Path.Reduce
+public import SolidGridHam.Path.PhaseCount
+public import SolidGridHam.Path.Cert
+public import SolidGridHam.Path.Prelim.NotchPF
+
+@[expose] public section
 
 /-!
 # S4 for the row branches (odd row, twist)

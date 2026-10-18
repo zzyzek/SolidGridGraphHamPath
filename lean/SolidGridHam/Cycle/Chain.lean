@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.V2
+module
+
+public import SolidGridHam.Cycle.V2
+
+@[expose] public section
 
 /-!
 # Boundary chains and their separation property

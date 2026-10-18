@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.StripCount
+module
+
+public import SolidGridHam.Cycle.StripCount
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # A verified 2-factor algorithm for grid graphs
@@ -46,10 +51,6 @@ namespace TF
 def Black (z : Pt) : Prop := (z.1 + z.2) % 2 = 0
 
 instance (z : Pt) : Decidable (Black z) := by unfold Black; infer_instance
-
--- The four edges at a point, as a list (searched in this order).
---
-def inc4 (z : Pt) : List Edge := [eR z, eL z, eU z, eD z]
 
 -- A forward alternating step from `u` along `e`: a grid edge, not in `F` when `u` is
 -- black, in `F` when `u` is white.

@@ -2,8 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Cycle.ChainLinks
-import SolidGridHam.Cycle.Complete
+module
+
+public import SolidGridHam.Cycle.ChainLinks
+public import SolidGridHam.Cycle.Complete
+
+@[expose] public section
 
 /-!
 # The near lemma for chain links anywhere (class CA)

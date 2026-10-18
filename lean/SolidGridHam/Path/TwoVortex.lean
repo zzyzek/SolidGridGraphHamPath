@@ -2,7 +2,11 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SlitHeight
+module
+
+public import SolidGridHam.Path.SlitHeight
+
+@[expose] public section
 
 /-!
 # Two vortices: climbs without cycles (both endpoints inner)

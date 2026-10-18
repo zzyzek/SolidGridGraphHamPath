@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.SheffCost
+module
+
+public import SolidGridHam.Path.SheffCost
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Dangling `s`, `t` on the boundary
@@ -17,9 +22,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset Classical
-
-def nbrsL (t : Pt) : List (Pt × Edge) :=
-  [((t.1 + 1, t.2), eR t), ((t.1 - 1, t.2), eL t), ((t.1, t.2 + 1), eU t), ((t.1, t.2 - 1), eD t)]
 
 lemma nbrsL_ends {t : Pt} {x : Pt × Edge} (hx : x ∈ nbrsL t) :
     (x.2.p = t ∧ x.2.q = x.1) ∨ (x.2.p = x.1 ∧ x.2.q = t) := by

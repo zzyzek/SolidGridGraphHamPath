@@ -2,7 +2,12 @@
 SPDX-License-Identifier: CC0-1.0
 Dedicated to the public domain under CC0 1.0 Universal; see LICENSE.
 -/
-import SolidGridHam.Path.HoleRelax
+module
+
+public import SolidGridHam.Path.HoleRelax
+public import SolidGridHam.Algorithm
+
+@[expose] public section
 
 /-!
 # Hole classes: an initial factor in each class (B-3, docs/HOLE_CLASSES.md §3.2 P8)
@@ -29,21 +34,6 @@ namespace SolidGridHam
 namespace HP
 
 open Finset
-
-def classSearch (V : Finset Pt) (F : Finset Edge) (as : List Pt) (hs : List ℤ) :
-    Option (Finset Edge) :=
-  let f := classPotential V F as hs
-  if isAdmissible V F as hs f then some (symmDiff F (jumpEdges V f)) else none
-
--- The one-hole try: the least admissible potential with value `h` at `t`.
---
-def classSearchOne (V : Finset Pt) (F : Finset Edge) (t : Pt) (h : ℤ) : Option (Finset Edge) :=
-  classSearch V F [t] [h]
-
--- The candidate classes `-|V|, …, |V|`.
---
-def classRange (V : Finset Pt) : List ℤ :=
-  (List.range (2 * V.card + 1)).map fun (i : ℕ) => (i : ℤ) - V.card
 
 section find
 
