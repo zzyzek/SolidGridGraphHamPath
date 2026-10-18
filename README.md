@@ -1,5 +1,7 @@
 # Hamiltonian s–t paths in solid grid graphs, in Lean
 
+![A Hamiltonian s–t path on a 197-point solid grid graph, coloured from s (blue) to t (orange)](paper/figures/hero.png)
+
 A polynomial-time algorithm that decides whether a solid grid graph has a Hamiltonian path
 between two given points, with a Lean 4 proof of its correctness and of a polynomial bound on
 its step count.
@@ -27,7 +29,6 @@ Hamiltonian `s`–`t` path. `decideHamPath` is computable.
 
 The paper in [`paper/`](paper/) gives the algorithm, the proof, pseudocode and worked examples.
 
-![A Hamiltonian s–t path on a 197-point solid grid graph, coloured from s (blue) to t (orange)](paper/figures/hero.png)
 
 ## What is proved
 
@@ -118,20 +119,23 @@ The input is an ASCII grid with `.` for points, `#` or a space for missing point
 for the endpoints. The output is `yes` and the path, or `no`. See [`lib/README.md`](lib/README.md)
 for JSON input, the options, and the C and JavaScript command lines.
 
-## Demo
+## [Demo](https://zzyzek.github.io/SolidGridGraphHamPath/demo)
 
-The demo is a static page that loads the JavaScript implementation as an ES module, so it has to
-be served over HTTP (browsers refuse modules from `file://`). `demo/` is self-contained, with a
-copy of `lib/js/hpst.js` in `demo/js/`:
+
+A demonstration of the algorithm in a small [web app](https://zzyzek.github.io/SolidGridGraphHamPath/demo).
+
+Generate a random solid shape, place `s` and `t` by
+clicking, add or remove points, and press *solve*. The path is coloured from `s` (blue) to `t`
+(orange).
+
+To run locally:
 
 ```bash
 cd demo
 python3 -m http.server 8000
 ```
 
-then open `http://localhost:8000/`. Generate a random solid shape, place `s` and `t` by
-clicking, add or remove points, and press *solve*. The path is coloured from `s` (blue) to `t`
-(orange).
+then open `http://localhost:8000/`.
 
 ## Sources
 
