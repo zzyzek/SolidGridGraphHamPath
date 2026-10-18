@@ -485,7 +485,7 @@ An edge of $V$ not in $H$ is called \emph{light}.
 Every run starts from some factor with prescribed degrees $d\le2$.
 The grid graph is bipartite, so such a factor is an integral maximum flow in the standard
 source--black--white--sink network, with capacity $d$ at the points and $1$ on the edges.
-\lean{findFactor} (\lean{DFactor.lean}, \cref{alg:findFactor}) runs the Ford--Fulkerson method on
+\lean{findFactor} (\lean{FindFactor.lean}, \cref{alg:findFactor}) runs the Ford--Fulkerson method on
 this network, with at most $|V|+1$ augmentations and every choice fixed.
 It returns a factor when one exists (\lean{findFactor\_some}), and returns none only when no factor
 exists (\lean{findFactor\_none}), at cost $O((|V|+1)^3)$ (\lean{DFC.findFactorCost\_le}).
@@ -1005,7 +1005,6 @@ Phantom factors correspond one to one to path factors of $V$ (\lean{notch\_up},
 Only cells of $V$ are flipped, so $p$ is never the corner of a flipped cell.
 A point is \emph{dangling} when it is the corner of no cell.
 If the other endpoint $s$ is dangling, every corner of a cell of $V$ has degree $2$.
-This case was proved first (\lean{hpSheff\_correct'}, \lean{SheffieldMain.lean}).
 
 \begin{definition}[two phantoms]
 Let $t$ and $s$ have missing lattice neighbours $p\ne q$.
@@ -1309,7 +1308,7 @@ The loop succeeds in class $0$ and is stuck in class $1$.}
 \label{fig:classes}
 \end{figure}
 
-\begin{lemma}[class implies \lean{SolidFor}, \lean{solidFor\_cluster}, \lean{solidFor\_of\_holes}]
+\begin{lemma}[class implies \lean{SolidFor}, \lean{solidFor\_of\_holes}]
 \label{lem:classsolid}
 If $G$ and $G'$ have the same class, then $D(G,G')(c)=0$ for every square $c$ that is not a cell of
 $V'$.
@@ -1318,7 +1317,7 @@ $V'$.
 The proof is in \cref{app:class}.
 \Cref{lem:classsolid} supplies exactly the hypothesis \lean{SolidFor} of \cref{thm:cert}.
 
-\begin{lemma}[the run keeps its class, \lean{sf\_flip}, \lean{sf\_flipCol}, \lean{sf\_reduceOutC}, \lean{HoleRun.lean}]
+\begin{lemma}[the run keeps its class, \lean{sf\_flip}, \lean{sf\_flipCol}, \lean{sf\_reduceOutC2}, \lean{HoleRun.lean}, \lean{HoleTwo.lean}]
 A flip of a cell whose left and right sides have the same membership keeps $D(\cdot,X)$ off the
 flipped cell, for every $X$.
 Every flip made by the loop satisfies this condition when it is made.
@@ -1704,23 +1703,23 @@ positions.
 \label{sec:lean}
 
 \paragraph{Structure.}
-The proof is in the Lean~4 library \lean{ULHC}~\cite{lean4} with Mathlib~\cite{mathlib2020}.
+The proof is in the Lean~4 library \lean{SolidGridHam}~\cite{lean4} with Mathlib~\cite{mathlib2020}.
 The toolchain is pinned to \lean{leanprover/lean4:v4.35.0-rc2} (\lean{lean/lean-toolchain}), and
 Mathlib to the revision in \lean{lean/lake-manifest.json}.
-The $s$--$t$ path development is in \lean{lean/ULHC/HP/Sheffield/}, $93$ files and about $25{,}600$
+The $s$--$t$ path development is in \lean{lean/SolidGridHam/Path/}, $98$ files and about $27{,}600$
 lines.
+The definitions in the statement are in \lean{lean/SolidGridHam/Basic/}.
 It builds on the grid, height and strip libraries of the companion Umans--Lenhart formalization
 (\lean{ulhc\_main}) in the same repository.
 \Cref{app:map} maps the ideas of this paper to modules.
 
 \paragraph{Axioms.}
-\lean{\#print axioms ULHC.HP.decideHamPath\_main} lists \lean{propext}, \lean{Classical.choice} and
+The command \lean{\#print axioms} applied to
+\lean{SolidGridHam.HP.decideHamPath\_main} lists \lean{propext}, \lean{Classical.choice} and
 \lean{Quot.sound}.
 The same holds for \lean{stuck\_minimal} and \lean{arc\_vortex2}.
 These outputs were obtained from the built library on 2026-10-17.
-Some files outside the dependency of \lean{decideHamPath\_main} contain \lean{sorry} (an abandoned route
-in \lean{CompletePF.lean}, \lean{ChainExistsTg.lean}, and two theorems of \lean{NotchPF.lean}).
-The axiom list shows that \lean{decideHamPath\_main} does not depend on them.
+No file of the library contains \lean{sorry}, and the build has no warnings.
 
 \paragraph{Trusted definitions.}
 Lean checks every step of the proof.
@@ -1750,7 +1749,7 @@ The implementations are not verified.
 \paragraph{How to check.}
 With \lean{elan} installed, run \lean{lake exe cache get} and \lean{lake build} in \lean{lean/}.
 Then run \lean{lake env lean} on a file containing
-\lean{import ULHC.HP.Sheffield.HPFinal} and \lean{\#print axioms ULHC.HP.decideHamPath\_main}.
+\lean{import SolidGridHam.Path.HPFinal} and \lean{\#print axioms SolidGridHam.HP.decideHamPath\_main}.
 
 % =====================================================================
 \section{Worked example}
@@ -2131,7 +2130,10 @@ algorithm (\lean{ulhc\_main}, same repository).
 \section{Lean module map}
 \label{app:map}
 
-All files are under \lean{lean/ULHC/HP/Sheffield/}.
+The files below are under \lean{lean/SolidGridHam/Path/}.
+The definitions in the statement are in \lean{lean/SolidGridHam/Basic/}, the Umans--Lenhart
+library that the path development builds on is in \lean{lean/SolidGridHam/Cycle/}, and lemmas on
+path factors and notches are in \lean{lean/SolidGridHam/Path/Prelim/}.
 
 \begin{center}
 \small
@@ -2144,12 +2146,13 @@ phase, bridges & \lean{Bridges}, \lean{Freeze}, \lean{SPhase}, \lean{SPhaseAlg},
 stuck $\Rightarrow$ certificate & \lean{Cert}, \lean{CertOf}, \lean{ColProof}, \lean{SideProof}, \lean{TriProof}, \lean{StuckL4} & \lean{cert\_of\_stuck}, \lean{l4\_of}\\
 repaired \S4.8 & \lean{Column}, \lean{Move}, \lean{MoveInv}, \lean{ColAfter}, \lean{SideAfter}, \lean{E1After}, \lean{Final}, \lean{FinalLocal}, \lean{Minimal} & \lean{lowerCol\_count}, \lean{stuck\_minimal}, \lean{cert\_count\_gen}\\
 undoing bridges & \lean{Undo}, \lean{UndoCount}, \lean{Node}, \lean{NoMid}, \lean{HalfBridge}, \lean{S4Rows}, \lean{S4RowSpec}, \lean{S4Merge}, \lean{S4MergeII}, \lean{S4TheoremR}, \lean{Compat0}--\lean{Compat3}, \lean{CaseA1}, \lean{CaseA2}, \lean{CaseB}, \lean{Overlap}, \lean{Assemble} & \lean{undo\_count}, \lean{goodCell\_of}, \lean{theoremR}\\
-one phantom, computable, cost & \lean{SheffieldMain}, \lean{SheffComp}, \lean{SheffCost}, \lean{SheffBoundary} & \lean{hpSheff\_correct'}, \lean{hpSheffC\_main}\\
+computable phase, cost & \lean{SheffComp}, \lean{SheffCost}, \lean{SheffBoundary} & \lean{planB\_eq}, \lean{goodB\_iff}, \lean{phI\_step}\\
+starting factor & \lean{FindFactor}, \lean{FindFactorCost} & \lean{findFactor\_some}, \lean{findFactor\_none}, \lean{findFactorCost\_le}\\
 fast loop & \lean{ConnSet}, \lean{PhaseS}, \lean{ReduceS}, \lean{PhaseSCost}, \lean{LoopF} & \lean{isConnected\_eq}, \lean{runPhase\_eq}, \lean{reducePieces\_eq}, \lean{twoPhantomLoop\_eq}, \lean{twoPhantomLoopCost\_le}, \lean{twoPhantomTestCost\_le}\\
 two phantoms, deletion walk & \lean{TwoPh}, \lean{TwoPhS4}, \lean{TwoPhCost}, \lean{TwoPhWalk} & \lean{hpSheffC2\_main}, \lean{del\_iff}, \lean{boundaryEndpoints\_main}\\
 heights, vortex, slit & \lean{Height}, \lean{SlitHeight}, \lean{Final} & \lean{height\_exists}, \lean{slit\_height}, \lean{arc\_vortex}\\
-classes & \lean{HoleClass}, \lean{HoleRun}, \lean{HoleAdm}, \lean{HoleRelax}, \lean{HoleTry}, \lean{HoleTryCost} & \lean{solidFor\_cluster}, \lean{sf\_reduceOutC}, \lean{classSearchOne\_sound}, \lean{relax\_bf}, \lean{classPotential\_eq}, \lean{classSearchCost\_le}\\
-hole loop & \lean{HoleLoop}, \lean{HoleTwo}, \lean{HoleOne}, \lean{HoleExposed} & \lean{runSC\_complete\_hole}, \lean{runSC2\_complete\_hole}\\
+classes & \lean{HoleRun}, \lean{HoleAdm}, \lean{HoleRelax}, \lean{HoleTry}, \lean{HoleTryCost} & \lean{solidFor\_of\_holes}, \lean{sf\_reduceOutC2}, \lean{classSearchOne\_sound}, \lean{relax\_bf}, \lean{classPotential\_eq}, \lean{classSearchCost\_le}\\
+hole loop & \lean{HoleTwo}, \lean{HoleOne} & \lean{runSC2\_complete\_hole}\\
 one inner endpoint & \lean{HoleWalk}, \lean{HoleWalkCost} & \lean{WS}, \lean{ws\_step}, \lean{holeCaseWalk\_correct}, \lean{oneHoleCase\_main}\\
 walk constant & \lean{WalkGeo}, \lean{WalkCount}, \lean{TwoPhWalkCost} & \lean{ring\_step}, \lean{opp\_step}, \lean{holeCaseWalkCost\_pot}, \lean{boundaryEndpointsWalkCost\_pot}\\
 two vortices & \lean{TwoVortex}, \lean{HoleTwoV}, \lean{HoleTwoVCost} & \lean{height2}, \lean{arc\_vortex2}, \lean{twoHoleCase\_main}\\

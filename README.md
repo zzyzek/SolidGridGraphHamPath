@@ -14,7 +14,7 @@ gets a *phantom* edge to a missing neighbour. An endpoint with all eight neighbo
 becomes a hole whose defect is a *vortex*, handled by a slit height and flip classes.
 
 ```lean
-theorem ULHC.HP.decideHamPath_main {V : Finset Pt} {s t : Pt}
+theorem SolidGridHam.HP.decideHamPath_main {V : Finset Pt} {s t : Pt}
     (hs : Solid V) (hst : s ≠ t) (hsV : s ∈ V) (htV : t ∈ V) :
     (decideHamPath V s t = true ↔ ∃ H, IsFactor V (dST s t) H ∧ ncomp V H = 1) ∧
       decideHamPathCost V s t ≤ 5220000 * (V.card + 3) ^ 6
@@ -47,8 +47,8 @@ An endpoint is *inner* when all eight of its king neighbours lie in `V`.
 
 Lean checks everything except the following.
 
-* **The definitions in the statement.** `Pt`, `Edge`, `IsEdge`, `deg`, `IsFactor` and `Solid`
-  (`lean/ULHC/Grid.lean`), `ncomp` (`Graph.lean`) and `dST` (`HP/StartPF.lean`). `Solid` says
+* **The definitions in the statement.** `Pt`, `Edge`, `IsEdge`, `deg`, `IsFactor`, `dST` and
+  `Solid` (`lean/SolidGridHam/Basic/Grid.lean`) and `ncomp` (`Basic/Graph.lean`). `Solid` says
   that every missing point reaches the outside of `V` by king moves through missing points. It
   is cross-checked by computation against "every bounded face is a unit square"
   (`checks/solid_check.py`, `checks/solid_check_grid.py`), not proved equivalent in Lean.
@@ -62,19 +62,22 @@ Lean checks everything except the following.
 
 The Umans–Lenhart part uses a different cost model. There the algorithm is written in a
 step-counting monad, so its bound is about the steps of the algorithm itself, given the cost
-table in `lean/ULHC/Timed/TimeM.lean` and the lint `checks/timed_lint.py`.
+table in `lean/SolidGridHam/Cycle/Timed/TimeM.lean` and the lint `checks/timed_lint.py`.
 
 ## Repository layout
 
-* `lean/ULHC/`: the formalization (Lean 4 and Mathlib).
-  * `HP/Sheffield/`: the s–t path development. `HPFinal.lean` has `decideHamPath_main`.
-    The phase and the certificate are in `SPhaseAlg`, `PhaseS`, `ReduceS`, `Cert*` and
-    `Minimal`, the phantoms in `TwoPh*`, the deletion walks in `TwoPhWalk*` and `HoleWalk*`, the
-    vortices and slit heights in `SlitHeight` and `TwoVortex`, and the classes and the class
-    search in `HoleClass`, `HoleRelax` and `HoleTry`. Lean names match the paper and its
-    pseudocode.
-  * The rest of `ULHC/` is the Umans–Lenhart Hamiltonian cycle formalization that the path work
-    builds on (`Main.lean` has `ulhc_main`), and the grid, height and factor libraries.
+* `lean/SolidGridHam/`: the formalization (Lean 4 and Mathlib, about 47,000 lines).
+  * `Basic/`: grid graphs, factors, connectivity, arcs and heights. Every definition in the
+    statement of the main theorem is here.
+  * `Path/`: the s–t path development. `HPFinal.lean` has `decideHamPath_main`. The phase and
+    the certificate are in `SPhaseAlg`, `PhaseS`, `ReduceS`, `Cert*` and `Minimal`, the phantoms in
+    `TwoPh*`, the deletion walks in `TwoPhWalk*` and `HoleWalk*`, the vortices and slit heights in
+    `SlitHeight` and `TwoVortex`, the class search in `HoleRelax` and `HoleTry`, and the starting
+    factor in `FindFactor`. Lean names match the paper and its pseudocode. `Path/Prelim/` holds
+    lemmas on path factors and notches that the development uses.
+  * `Cycle/`: the Umans–Lenhart Hamiltonian cycle formalization that the path work builds on
+    (`Main.lean` has `ulhc_main`), with the step-counting algorithm in `Cycle/Timed/`.
+  * [`lean/README.md`](lean/README.md) describes the package.
 * `paper/`: the paper (LaTeX). `make` builds `build/hpst.pdf`, and `make figures` regenerates the
   figures from the Python reference implementation.
 * `lib/`: reference implementations, not verified.
@@ -98,7 +101,7 @@ lake exe cache get
 lake build
 ```
 
-`lean/build.sh` wraps `lake build`. On a shared machine, `ULHC_MEM=12G LEAN_NUM_THREADS=2
+`lean/build.sh` wraps `lake build`. On a shared machine, `LEAN_MEM=12G LEAN_NUM_THREADS=2
 lean/build.sh` caps memory and threads. A full build takes about half an hour on four cores.
 
 ```bash

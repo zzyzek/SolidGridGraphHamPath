@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 //
-// Fast mode of `decideHamPath` (lean/ULHC/HP/Sheffield/HPFinal.lean) in C99: a port of
+// Fast mode of `decideHamPath` (lean/SolidGridHam/Path/HPFinal.lean) in C99: a port of
 // lib/python/hpst_fast.py. Same algorithm, same answer-preserving speedups, same iteration
 // orders (with heuristic off, the returned path is the Python fast-mode path):
 //
@@ -480,7 +480,7 @@ static int nec(Slv *z, int a, int b) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// S3: findFactor (DFactor.lean), layers as BFS distances, warm start (S3b). Writes F (size 2N);
+// S3: findFactor (FindFactor.lean), layers as BFS distances, warm start (S3b). Writes F (size 2N);
 // returns 1 iff a factor (deg 1 at s, t; 2 elsewhere) exists. Uses z->Ul.
 // ---------------------------------------------------------------------------------------------
 

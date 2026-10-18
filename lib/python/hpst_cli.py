@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: CC0-1.0
 #
 # Command line front end for the Hamiltonian s-t path decision procedure `decideHamPath` (Lean,
-# lean/ULHC/HP/Sheffield/HPFinal.lean). Input formats and flags: lib/README.md.
+# lean/SolidGridHam/Path/HPFinal.lean). Input formats and flags: lib/README.md.
 #
 # Exit codes: 0 answered (yes or no), 1 --check disagreement or invalid witness,
 # 2 bad input (format, missing endpoints, non-solid V).

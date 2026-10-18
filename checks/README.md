@@ -1,7 +1,7 @@
 # Checks
 
 * `timed_lint.py`: the cost-model lint. Inside every definition of the counted algorithm
-  (`lean/ULHC/Timed/*.lean`, except `TimeM.lean`), it allows only the counted operations of
+  (`lean/SolidGridHam/Cycle/Timed/*.lean`, except `TimeM.lean`), it allows only the counted operations of
   `TimeM.lean` and constant-time functions. It rejects membership tests, sums, set and list
   operations, `decide`, and calls to the uncounted algorithm.
 * `sanity_gen.py`, `sanity_cmp.py`: generate solid point sets, decide Hamiltonicity by

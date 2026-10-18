@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: CC0-1.0
 #
-# Fast mode for `decideHamPath` (lean/ULHC/HP/Sheffield/HPFinal.lean). Same algorithm as hpst_ref.py
+# Fast mode for `decideHamPath` (lean/SolidGridHam/Path/HPFinal.lean). Same algorithm as hpst_ref.py
 # (which mirrors Lean line by line), with speedups that never change the yes/no answer. Each
 # speedup is marked "SPEEDUP" and justified where it is made. Summary:
 #
@@ -278,7 +278,7 @@ def biconnected_plus(cx, inU, Ul, a, b):
 
 
 # ---------------------------------------------------------------------------------------------
-# S3: findFactor (DFactor.lean) with the layers as BFS distances.
+# S3: findFactor (FindFactor.lean) with the layers as BFS distances.
 # SPEEDUP justification: layer k of Lean's `layer` is {z : dist z <= k} for the BFS distance
 # from layer 0 along `Fwd` steps (layer k+1 = layer k plus its forward neighbours). Lean's `walk`
 # skips the layers containing the point, so jumping to layer dist(v) - 1 is the same walk. The

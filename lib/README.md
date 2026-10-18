@@ -1,7 +1,7 @@
 # Reference implementation of `decideHamPath` (Python)
 
 `lib/python/` holds a Python 3 (standard library only) implementation of the Lean-verified
-decision procedure `decideHamPath` (`lean/ULHC/HP/Sheffield/HPFinal.lean`): for a solid grid graph `V`
+decision procedure `decideHamPath` (`lean/SolidGridHam/Path/HPFinal.lean`): for a solid grid graph `V`
 and distinct `s, t ∈ V`, `decideHamPath V s t = true` iff `V` has a Hamiltonian `s`–`t` path
 (`decideHamPath_main`, at most `5 220 000 · (|V|+3)⁶` steps). The Python version also returns the
 path. It follows the Lean definitions of commit e25dca0 (branch `faropp`): `Far` is king

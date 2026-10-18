@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC0-1.0
 //
 // Hamiltonian s-t paths in solid grid graphs: C port of the fast mode of the Lean-verified
-// decision procedure `decideHamPath` (lean/ULHC/HP/Sheffield/HPFinal.lean), following
+// decision procedure `decideHamPath` (lean/SolidGridHam/Path/HPFinal.lean), following
 // lib/python/hpst_fast.py speedup for speedup (S1-S8). See lib/README.md.
 //
 #ifndef HPST_H

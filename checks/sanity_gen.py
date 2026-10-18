@@ -100,7 +100,7 @@ else:
 truth = [ham(V) for V in shapes]
 with open(outj, 'w') as f: json.dump({'n': len(shapes), 'ham': truth, 'sizes': [len(V) for V in shapes]}, f)
 with open(outl, 'w') as f:
-  f.write('import ULHC\nopen ULHC\n\ndef shapes : List (Finset Pt) := [\n')
+  f.write('import SolidGridHam\nopen SolidGridHam\n\ndef shapes : List (Finset Pt) := [\n')
   f.write(',\n'.join('  ([' + ', '.join(f'({x}, {y})' for x, y in sorted(V)) + '] : List Pt).toFinset' for V in shapes))
   f.write('\n]\n\n#eval do\n  for V in shapes do\n    IO.println s!"{ulhc V}"\n' if mode == 'box4' else
           '\n]\n\n#eval do\n  for V in shapes do\n    IO.println s!"({ulhc V}, {(T.ulhcT V).ret})"\n')

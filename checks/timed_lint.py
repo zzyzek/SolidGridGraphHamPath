@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: CC0-1.0
-# Lint for the counted algorithm (lean/ULHC/Timed/*.lean, except TimeM.lean).
+# Lint for the counted algorithm (lean/SolidGridHam/Cycle/Timed/*.lean, except TimeM.lean).
 # Inside every `def` body, only counted operations (TimeM.lean) and constant-time functions on
 # points, edges, sides, strips, nodes, numbers and Booleans may appear. Rejected:
 #  * membership, sums, set and list operations that are not counted wrappers;
@@ -8,7 +8,7 @@
 #  * any call to an uncounted algorithm function.
 # Exit status 1 and a report on any violation.
 import re, sys, glob, os
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lean', 'ULHC', 'Timed')
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lean', 'SolidGridHam', 'Cycle', 'Timed')
 TOKENS = [r'∈', r'∉', r'∑', r'∪', r'∩', r'\\', r'⊆', r'\bdecide\b', r'\bsymmDiff\b', r'\binsert\b',
   r'\.(filter|image|biUnion|card|map|all|any|find\?|sort|toFinset|toList|length|sum|erase|'
   r'foldl|foldr|flatMap|bind|min|max|range|attach|powerset|product|zip|join|reverse|append)\b',

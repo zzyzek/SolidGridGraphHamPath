@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: CC0-1.0
 #
-# Faithful Python port of the Lean decision procedure `decideHamPath` (lean/ULHC/HP/Sheffield/HPFinal.lean)
+# Faithful Python port of the Lean decision procedure `decideHamPath` (lean/SolidGridHam/Path/HPFinal.lean)
 # for Hamiltonian s-t paths in solid grid graphs.
 #
 # Every Lean definition on the call path of `decideHamPath` has a Python function of the same name
@@ -298,7 +298,7 @@ def other(e, y):
   return ( edge_q(e) if (edge_p(e) == y) else edge_p(e) )
 
 
-# DFactor.lean / TwoFactor.lean `inc4` (searched in this order).
+# FindFactor.lean / TwoFactor.lean `inc4` (searched in this order).
 #
 def inc4(z):
   return (eR(z), eL(z), eU(z), eD(z))
@@ -348,7 +348,7 @@ def connB(V, F, x, y):
 
 
 # ---------------------------------------------------------------------------------------------
-# DFactor.lean (namespace DF), StartPF.lean `dST`
+# FindFactor.lean (namespace DF), StartPF.lean `dST`
 # ---------------------------------------------------------------------------------------------
 
 # StartPF.lean `dST`.
@@ -361,19 +361,19 @@ def Black(z):
   return ( ((z[0] + z[1]) % 2) == 0 )
 
 
-# DFactor.lean `Fwd`.
+# FindFactor.lean `Fwd`.
 #
 def Fwd(V, F, u, e):
   return ( IsEdge(V, e) and ( (e not in F) if Black(u) else (e in F) ) )
 
 
-# DFactor.lean `nbr`.
+# FindFactor.lean `nbr`.
 #
 def nbr(V, F, u):
   return {other(e, u) for e in inc4(u) if Fwd(V, F, u, e)}
 
 
-# DFactor.lean `layerAcc`: [layer k, ..., layer 0]. Stops once a layer equals the previous one
+# FindFactor.lean `layerAcc`: [layer k, ..., layer 0]. Stops once a layer equals the previous one
 # and pads with copies (value-identical: equal layers stay equal).
 #
 def layerAcc(V, d, F, k):
@@ -392,14 +392,14 @@ def layerAcc(V, d, F, k):
   return out
 
 
-# DFactor.lean `Bwd`.
+# FindFactor.lean `Bwd`.
 #
 def Bwd(V, F, L, v, e):
   return ( IsEdge(V, e) and (other(e, v) in L) and
            ( (e in F) if Black(v) else (e not in F) ) )
 
 
-# DFactor.lean `pred`.
+# FindFactor.lean `pred`.
 #
 def pred(V, F, L, v):
   for e in inc4(v):
@@ -408,7 +408,7 @@ def pred(V, F, L, v):
   return None
 
 
-# DFactor.lean `walk`: one list entry consumed per step.
+# FindFactor.lean `walk`: one list entry consumed per step.
 #
 def walk(V, F0, Ls, v, F):
   for L in Ls:
@@ -422,13 +422,13 @@ def walk(V, F0, Ls, v, F):
   return F
 
 
-# DFactor.lean `pick`: the lexicographic least point.
+# FindFactor.lean `pick`: the lexicographic least point.
 #
 def pick(S):
   return ( min(S) if S else None )
 
 
-# DFactor.lean `augStep`.
+# FindFactor.lean `augStep`.
 #
 def augStep(V, d, F):
   Ls = layerAcc(V, d, F, len(V))
@@ -441,7 +441,7 @@ def augStep(V, d, F):
   return walk(V, F, rest, w, F)
 
 
-# DFactor.lean `augLoop`.
+# FindFactor.lean `augLoop`.
 #
 def augLoop(V, d, n, F):
   while n > 0:
@@ -453,7 +453,7 @@ def augLoop(V, d, n, F):
   return F
 
 
-# DFactor.lean `findFactor`.
+# FindFactor.lean `findFactor`.
 #
 def findFactor(V, d):
   _stat('findFactor')
