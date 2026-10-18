@@ -1,0 +1,9 @@
+{
+  "name": "hpst",
+  "version": "0.1.0",
+  "description": "Hamiltonian s-t paths in solid grid graphs (port of the Lean-verified decideHamPath, fast mode)",
+  "license": "CC0-1.0",
+  "type": "module",
+  "main": "hpst.js",
+  "bin": { "hpst": "cli.js" }
+}

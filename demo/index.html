@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Hamiltonian s-t paths in solid grid graphs</title>
+  <link rel="icon" type="image/png" href="favicon.ico">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <script type="text/javascript" src="js/two.js"></script>
+  <style>
+    body { margin-top: 2em; }
+    #ui_canvas svg { border: 1px solid rgb(220,220,220); cursor: crosshair; }
+    .ctl input[type=button] { margin-right: 0.4em; }
+    .ctl label { display: inline; margin-right: 1em; font-weight: normal; }
+    #ui_msg { font-weight: 600; min-height: 1.5em; }
+    textarea { font-family: monospace; height: 14em; }
+  </style>
+</head>
+
+<body>
+  <div class="container" style="max-width: 1100px;">
+    <h4>Hamiltonian <i>s</i>&ndash;<i>t</i> paths in solid grid graphs</h4>
+    <p>
+      A demo of the polynomial-time decision procedure whose correctness and step bound are
+      proved in Lean 4 (<code>decideHamPath_main</code>). This page runs the JavaScript port of
+      its fast mode. Click a lattice point to add or remove it, or choose <i>s</i> / <i>t</i>
+      below and click to place an endpoint. The shape must be solid (no holes).
+    </p>
+
+    <div class="row ctl">
+      <input id="ui_btn_random" type="button" value="random shape">
+      <span>size</span> <input id="ui_n" type="text" value="80" style="width: 4em;">
+      <span>min. arm width</span> <input id="ui_wmin" type="text" value="2" style="width: 3em;">
+      <input id="ui_btn_st" type="button" value="random s, t">
+      <input id="ui_btn_clear" type="button" value="clear">
+    </div>
+
+    <div class="row ctl">
+      <span>click to:</span>
+      <label><input type="radio" name="mode" id="ui_mode_edit" checked> add / remove points</label>
+      <label><input type="radio" name="mode" id="ui_mode_s"> place <i>s</i></label>
+      <label><input type="radio" name="mode" id="ui_mode_t"> place <i>t</i></label>
+    </div>
+
+    <div class="row ctl">
+      <input id="ui_btn_solve" type="button" value="solve" class="button-primary">
+      <label><input type="checkbox" id="ui_show" checked> show path</label>
+      <label><input type="checkbox" id="ui_heur" checked> try the fast heuristic first</label>
+      <span id="ui_info" style="color: rgb(120,120,120);"></span>
+    </div>
+
+    <div class="row"><div id="ui_msg"></div></div>
+
+    <div class="row">
+      <div class="eight columns"><div id="ui_canvas"></div></div>
+      <div class="four columns">
+        <span>ASCII (<code>.</code> point, <code>#</code> none, <code>s</code>, <code>t</code>)</span>
+        <textarea id="ui_ascii" class="u-full-width"></textarea>
+        <input id="ui_btn_export" type="button" value="export">
+        <input id="ui_btn_import" type="button" value="import">
+      </div>
+    </div>
+
+    <p style="color: rgb(120,120,120); font-size: 0.9em;">
+      The path is coloured from blue at <i>s</i> to orange at <i>t</i>; points are black or
+      white by the parity of <i>x</i>+<i>y</i>. With the heuristic off, every answer comes from
+      the algorithm itself. Large shapes (a few hundred points) can take a few seconds.
+    </p>
+  </div>
+
+  <script type="module" src="js/demo.js"></script>
+</body>
+</html>

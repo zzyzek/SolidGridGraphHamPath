@@ -1,0 +1,517 @@
+% SPDX-License-Identifier: CC0-1.0
+%
+% Pseudocode of the procedures that decideHamPath runs, transcribed from the Lean definitions.
+% Requires in the preamble of hpst.tex:
+%   \usepackage{algorithm}
+%   \usepackage[noend]{algpseudocode}
+% Uses \lean{...} from hpst.tex.
+%
+% Procedures are typeset in small capitals (\proc), helper predicates and functions in sans
+% serif (\pfn), multi-letter variables in italics (\var).
+%
+\algrenewcommand{\textproc}{\textsc}
+\algrenewcommand{\algorithmiccomment}[1]{\hfill{\small$\triangleright$~#1}}
+\newcommand{\proc}[1]{\mbox{\textsc{#1}}}
+\newcommand{\pfn}[1]{\textsf{#1}}
+\newcommand{\var}[1]{\mathit{#1}}
+\newcommand{\pctrue}{\textsf{true}}
+\newcommand{\pcfalse}{\textsf{false}}
+\newcommand{\pcnone}{\textsf{none}}
+\newcommand{\pcbreak}{\textbf{break}}
+
+\paragraph{Pseudocode.}
+\proc{DecideHamPath} (\cref{alg:decideHamPath}) chooses one of three deletion walks by testing which
+endpoints are inner.
+Each walk deletes endpoints until the two out-vertices are Far with phantoms that are not opposed,
+and then runs a final test.
+The final test builds a path factor with \proc{FindFactor}, in the hole cases moves it into each
+class with \proc{ClassSearch}, and runs the two-phantom loop \proc{TwoPhantomLoop}.
+Each round of that loop is a \proc{RunPhase} followed by \proc{ReducePieces}.
+
+The blocks below use the following conventions.
+Each procedure has the name of its Lean definition, capitalised, and the caption of its block gives
+the Lean file.
+Helper predicates and functions are set in sans serif and are described after each block with
+their Lean names.
+$\pfn{Nbrs}(t)$ (Lean \lean{nbrsL}) is the list of pairs $(y,e)$ with $y$ a lattice neighbour of
+$t$ and $e$ the edge $t$--$y$, in the order right, left, up, down.
+The cells of $V$ are visited in lexicographic order (\lean{cellList}).
+The procedures return Booleans, and \pctrue\ means that a Hamiltonian path exists.
+Every loop over a list stops at its first success, as \lean{List.any}, \lean{List.find?} and
+\lean{List.findSome?} do in Lean.
+A loop ``for $n$ rounds'' runs at most $n$ times, and $n$ is the fuel of the Lean definition.
+The Python reference implementation returns the path as a witness instead of
+\pctrue.
+
+\begin{algorithm}[htbp]
+\caption{\proc{DecideHamPath} (Lean \lean{decideHamPath}, \lean{HPFinal.lean})}
+\label{alg:decideHamPath}
+\begin{algorithmic}[1]
+\Function{DecideHamPath}{$V,s,t$}
+  \If{$\pfn{IsInner}(V,s)$}
+    \If{$\pfn{IsInner}(V,t)$} \Return \Call{TwoHoleCase}{$V,s,t$}
+      \Comment{both endpoints inner}
+    \Else\ \Return \Call{OneHoleCase}{$V,t,s$}
+      \Comment{only $s$ inner, read the path backwards}
+    \EndIf
+  \ElsIf{$\pfn{IsInner}(V,t)$} \Return \Call{OneHoleCase}{$V,s,t$}
+    \Comment{only $t$ inner}
+  \Else\ \Return \Call{BoundaryEndpoints}{$V,s,t$}
+    \Comment{neither endpoint inner}
+  \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:decideHamPath}, $\pfn{IsInner}(V,p)$ (Lean \lean{isInner}) holds when the four squares with
+corner $p$ are cells of $V$.
+
+\begin{algorithm}[htbp]
+\caption{\proc{BoundaryEndpoints} (Lean \lean{boundaryEndpoints}, \lean{TwoPhWalk.lean})}
+\label{alg:boundaryEndpoints}
+\begin{algorithmic}[1]
+\Function{BoundaryEndpoints}{$V,s,t$}
+  \Comment{$s$ and $t$ each have a missing king neighbour}
+  \If{$|V|\le2$} \Return [$s$ is a lattice neighbour of $t$]
+  \EndIf
+  \If{some $(q,e_{sq})\in\pfn{Nbrs}(s)$ has $q\notin V$ (take the first)}
+    \Comment{$q$ becomes the phantom of $s$}
+    \State \Return \Call{BoundaryEndpointsWalk}{$s,q,e_{sq},12,V,t$}
+  \EndIf
+  \ForAll{$(x,e)\in\pfn{Nbrs}(s)$ with $x\in V$, $x\ne t$}
+    \Comment{delete $s$ (phantom of $x$)}
+    \If{\Call{BoundaryEndpointsWalk}{$x,s,e,12,V\setminus\{s\},t$}} \Return \pctrue
+    \EndIf
+  \EndFor
+  \State \Return \pcfalse
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[htbp]
+\caption{\proc{BoundaryEndpointsWalk} (Lean \lean{boundaryEndpointsWalk}, \lean{TwoPhWalk.lean})}
+\label{alg:boundaryEndpointsWalk}
+\begin{algorithmic}[1]
+\Function{BoundaryEndpointsWalk}{$s,q,e_{sq},\var{fuel},V,t$}
+  \Comment{$s$ keeps its phantom $q$, $t$ moves}
+  \If{$\var{fuel}=0$} \Return \pcfalse
+  \EndIf
+  \If{$|V|\le2$} \Return [$s$ is a lattice neighbour of $t$]
+  \EndIf
+  \If{some $(p,e_{tp})\in\pfn{Nbrs}(t)$ has $\pfn{IsUsablePhantom}(V,s,q,t,p)$ (take the first)}
+    \If{$\pfn{IsFar}(t,s)$}
+      \Comment{$p$ is usable and $t$ is Far from $s$}
+      \State \Return \Call{TwoPhantomTest}{$V,s,t,p,q,e_{tp},e_{sq}$}
+      \Comment{the final test}
+    \EndIf
+  \EndIf
+  \ForAll{$(x,\cdot)\in\pfn{Nbrs}(t)$ with $x\in V$, $x\ne s$}
+    \Comment{delete $t$, $x$ is the next endpoint}
+    \If{\Call{BoundaryEndpointsWalk}{$s,q,e_{sq},\var{fuel}-1,V\setminus\{t\},x$}} \Return \pctrue
+    \EndIf
+  \EndFor
+  \State \Return \pcfalse
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:boundaryEndpoints,alg:boundaryEndpointsWalk}, $e_{sq}$ is the phantom edge $s$--$q$ and $e_{tp}$ is the phantom
+edge $t$--$p$.
+The fuel $12$ allows the at most $11$ deletion levels of \cref{sec:walk}.
+$\pfn{IsUsablePhantom}(V,s,q,t,p)$ (Lean \lean{isUsablePhantom}) holds when $p\notin V$, $p\ne q$, and
+the phantom $p$ of $t$ is not opposed to the phantom $q$ of $s$, so $p$ is a usable phantom.
+$\pfn{IsFar}(t,s)$ (Lean \lean{isFar}) holds when $t=s$ or $\dist(t,s)\ge2$.
+$\pfn{PhantomsOpposed}(a,m_a,b,m_b)$ (Lean \lean{phantomsOpposed}) holds when the phantoms $m_a$ of $a$ and
+$m_b$ of $b$ are opposed (\cref{def:opp}).
+
+\begin{algorithm}[htbp]
+\caption{\proc{HoleCase} (Lean \lean{holeCase}, \lean{HoleWalk.lean}), \proc{OneHoleCase} (Lean
+  \lean{oneHoleCase}, \lean{HoleWalk.lean}) and \proc{TwoHoleCase} (Lean \lean{twoHoleCase},
+  \lean{HoleTwoV.lean})}
+\label{alg:holeCase}
+\label{alg:oneHoleCase}
+\label{alg:twoHoleCase}
+\begin{algorithmic}[1]
+\Function{HoleCase}{$\var{finalTest},V,s,t$}
+  \Comment{$t$ is inner}
+  \If{$|V|\le2$} \Return [$s$ is a lattice neighbour of $t$]
+  \EndIf
+  \ForAll{$(w,e_{wt})\in\pfn{Nbrs}(t)$ with $w\in V$, $w\ne s$}
+    \Comment{delete $t$ (phantom of $w$)}
+    \If{$|V\setminus\{t\}|\le2$}
+      \If{$s$ is a lattice neighbour of $w$} \Return \pctrue
+      \EndIf
+    \Else
+      \ForAll{$(x,e)\in\pfn{Nbrs}(s)$ with $x\in V\setminus\{t\}$, $x\ne w$}
+        \Comment{delete $s$ (phantom of $x$)}
+        \If{\Call{HoleCaseWalk}{$\var{finalTest}(w,e_{wt}),w,t,10,V\setminus\{t,s\},x,s,e$}}
+          \Return \pctrue
+        \EndIf
+      \EndFor
+    \EndIf
+  \EndFor
+  \State \Return \pcfalse
+\EndFunction
+\Statex
+\Function{OneHoleCase}{$V,s,t$}
+  \Comment{$t$ inner, $s$ not inner}
+  \State $\var{finalTest}(w,e_{wt})(U,s',q,e_{sq})\gets\Call{OneHoleFinalTest}{U,s',w,t,q,e_{wt},e_{sq}}$
+  \State \Return \Call{HoleCase}{$\var{finalTest},V,s,t$}
+\EndFunction
+\Statex
+\Function{TwoHoleCase}{$V,s,t$}
+  \Comment{the original $s$ is the second hole}
+  \State $\var{finalTest}(w,e_{wt})(U,s',q,e_{sq})\gets\Call{TwoHoleFinalTest}{U,s',w,t,s,q,e_{wt},e_{sq}}$
+  \State \Return \Call{HoleCase}{$\var{finalTest},V,s,t$}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:holeCase} the point $w$ is the neighbour of $t$ on the path, $e_{wt}$ is the edge
+$w$--$t$, and the deleted $t$ is the phantom of $w$.
+The argument $\var{finalTest}$ is a function of $(w,e_{wt})$ that returns the final test of the
+walk.
+In \proc{TwoHoleCase} the original $s$ is passed to \proc{TwoHoleFinalTest} as the second hole
+$r$.
+
+\begin{algorithm}[htbp]
+\caption{\proc{HoleCaseWalk} (Lean \lean{holeCaseWalk}, \lean{HoleWalk.lean})}
+\label{alg:holeCaseWalk}
+\begin{algorithmic}[1]
+\Function{HoleCaseWalk}{$\var{finalTest},w,p_w,\var{fuel},U,s,q,e_{sq}$}
+  \Comment{$w$ keeps its phantom $p_w$, $s$ moves}
+  \If{$\var{fuel}=0$} \Return \pcfalse
+  \EndIf
+  \If{$|U|\le2$} \Return [$s$ is a lattice neighbour of $w$]
+  \EndIf
+  \If{$\pfn{IsFar}(w,s)$ and not $\pfn{PhantomsOpposed}(w,p_w,s,q)$}
+    \Comment{ready for the final test}
+    \State \Return $\var{finalTest}(U,s,q,e_{sq})$
+  \EndIf
+  \ForAll{$(x,e)\in\pfn{Nbrs}(s)$ with $x\in U$, $x\ne w$}
+    \Comment{delete $s$ (phantom of $x$)}
+    \If{\Call{HoleCaseWalk}{$\var{finalTest},w,p_w,\var{fuel}-1,U\setminus\{s\},x,s,e$}}
+      \Return \pctrue
+    \EndIf
+  \EndFor
+  \State \Return \pcfalse
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:holeCaseWalk} the phantom $p_w$ of $w$ is the deleted inner point $t$.
+The phantom $q$ of $s$ is the point deleted last, and $e_{sq}$ is the edge $s$--$q$.
+The fuel $10$ allows the at most $9$ deletions of \cref{sec:one}.
+
+\begin{algorithm}[htbp]
+\caption{\proc{OneHoleFinalTest} (Lean \lean{oneHoleFinalTest}, \lean{HoleWalk.lean}) and
+  \proc{TwoHoleFinalTest} (Lean \lean{twoHoleFinalTest}, \lean{HoleTwoV.lean})}
+\label{alg:oneHoleFinalTest}
+\label{alg:twoHoleFinalTest}
+\begin{algorithmic}[1]
+\Function{OneHoleFinalTest}{$U,s,w,t,q,e_{wt},e_{sq}$}
+  \Comment{hole at $t$}
+  \If{not $\pfn{IsNarrow}(U)$} \Return \pcfalse
+    \Comment{a wide set has no Hamiltonian path}
+  \EndIf
+  \State $R\gets\Call{FindFactor}{U,d_{sw}}$
+  \Comment{a path factor with ends $s$ and $w$}
+  \If{$R=\pcnone$} \Return \pcfalse
+  \EndIf
+  \State $F\gets R\cup\{e_{wt},e_{sq}\}$
+  \Comment{the reference factor, phantoms $t$ and $q$}
+  \For{$h=-|U|,\dots,|U|$}
+    \Comment{every possible class (\lean{classRange})}
+    \State $G\gets\Call{ClassSearch}{U,F,[t],[h]}$
+    \Comment{a factor of class $h$ (\lean{classSearchOne})}
+    \If{$G\ne\pcnone$ and \Call{TwoPhantomLoop}{$U,t,q,|U|+2,G$}} \Return \pctrue
+    \EndIf
+  \EndFor
+  \State \Return \pcfalse
+\EndFunction
+\Statex
+\Function{TwoHoleFinalTest}{$U,s,w,t,r,q,e_{wt},e_{sq}$}
+  \Comment{holes at $t$ and $r$}
+  \If{not $\pfn{IsNarrow}(U)$} \Return \pcfalse
+  \EndIf
+  \State $R\gets\Call{FindFactor}{U,d_{sw}}$
+  \If{$R=\pcnone$} \Return \pcfalse
+  \EndIf
+  \State $F\gets R\cup\{e_{wt},e_{sq}\}$
+  \For{$h_1=-|U|,\dots,|U|$}
+    \For{$h_2=-|U|,\dots,|U|$}
+      \Comment{every possible pair of classes}
+      \State $G\gets\Call{ClassSearch}{U,F,[t,r],[h_1,h_2]}$
+      \If{$G\ne\pcnone$ and \Call{TwoPhantomLoop}{$U,t,q,|U|+2,G$}} \Return \pctrue
+      \EndIf
+    \EndFor
+  \EndFor
+  \State \Return \pcfalse
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:oneHoleFinalTest}, $\pfn{IsNarrow}(U)$ (Lean \lean{isNarrow}) holds when the width and the
+height of the bounding box of $U$ are both less than $|U|$.
+The degrees $d_{sw}$ are $1$ at $s$ and $w$ and $2$ elsewhere.
+The factor $F$ is a two-phantom factor on $U\cup\{t,q\}$ with phantoms $t$ of $w$ and $q$ of $s$.
+
+\begin{algorithm}[htbp]
+\caption{\proc{ClassSearch} (Lean \lean{classSearch}, \lean{HoleTry.lean}, with \lean{classPotential} and
+  \lean{relaxA}, \lean{HoleRelax.lean})}
+\label{alg:classSearch}
+\begin{algorithmic}[1]
+\Function{ClassSearch}{$V,F,[a_1,\dots,a_k],[h_1,\dots,h_k]$}
+  \Comment{hole $a_i$ gets class $h_i$}
+  \State $\var{box}\gets\pfn{BoxSquares}(V)$
+  \Comment{squares of the bounding box, $x$-major}
+  \ForAll{$c\in\var{box}$}
+    \Comment{start below every solution (\lean{kInitA})}
+    \State $\varphi(c)\gets h_i$ for the first $i$ with $a_i=c$, else $-\pfn{BoxWidth}(V)$
+  \EndFor
+  \State $\varphi(c)\gets0$ for every square $c\notin\var{box}$
+  \For{$|\var{box}|+1$ rounds}
+    \Comment{Bellman--Ford relaxation (\lean{relaxA})}
+    \State $\varphi'(c)\gets\max(\varphi(c),\pfn{LowerBound}(V,F,\varphi,c))$ for all
+      $c\in\var{box}$
+    \If{$\varphi'=\varphi$ on $\var{box}$} \pcbreak
+      \Comment{fixed point, the least potential}
+    \EndIf
+    \State $\varphi\gets\varphi'$
+  \EndFor
+  \If{$\pfn{IsAdmissible}(V,F,[a_i],[h_i],\varphi)$}
+    \Return $F\oplus\pfn{JumpEdges}(V,\varphi)$
+    \Comment{the factor of these classes}
+  \Else\ \Return \pcnone
+    \Comment{no factor has these classes}
+  \EndIf
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:classSearch}, $\pfn{BoxSquares}(V)$ (Lean \lean{boxSquares}) lists the squares of the bounding
+box of $V$, and $\pfn{BoxWidth}(V)$ (Lean \lean{boxWidth}) is the width of that box.
+Let $\sigma(e)$ be the sign of the arc of $F$ across $e$ ($+1$ from the lower or left square to the
+upper or right one) when $e$ is an edge of $V$, and $0$ otherwise.
+$\pfn{LowerBound}(V,F,\varphi,c)$ (Lean \lean{lowerBound}) is the largest lower bound on $\varphi(c)$
+given by the four neighbours of $c$ under the constraint that each jump lies between $0$ and
+$\sigma(e)$.
+It is the maximum of $\varphi(c_\downarrow)+\min(0,\sigma)$ and
+$\varphi(c_\leftarrow)+\min(0,\sigma)$ across the bottom and left sides and of
+$\varphi(c_\uparrow)-\max(0,\sigma)$ and $\varphi(c_\rightarrow)-\max(0,\sigma)$ across the top
+and right sides.
+$\pfn{IsAdmissible}$ (Lean \lean{isAdmissible}) holds when every side of every square of the box has jump
+$0$, or is an edge $e$ of $V$ with jump $\sigma(e)$, and $\varphi(a_i)=h_i$ for all $i$.
+$\pfn{JumpEdges}(V,\varphi)$ (Lean \lean{jumpEdges}) is the set of edges of $V$ on sides of squares of the
+box across which $\varphi$ jumps.
+The rounds bound $|\var{box}|+1$ is \lean{kFuel}.
+The potentials are stored in an array indexed by box position (\lean{toFA}).
+With one hole, \proc{ClassSearch} is the Lean \lean{classSearchOne}.
+
+\begin{algorithm}[htbp]
+\caption{\proc{TwoPhantomTest} (Lean \lean{twoPhantomTest}, \lean{LoopF.lean}) and
+  \proc{TwoPhantomLoop} (Lean \lean{twoPhantomLoop}, \lean{ReduceS.lean})}
+\label{alg:twoPhantomTest}
+\label{alg:twoPhantomLoop}
+\begin{algorithmic}[1]
+\Function{TwoPhantomTest}{$V,s,t,p,q,e_{tp},e_{sq}$}
+  \Comment{phantoms $p$ of $t$ and $q$ of $s$}
+  \State $R\gets\Call{FindFactor}{V,d_{st}}$
+  \Comment{a path factor with ends $s$ and $t$}
+  \If{$R=\pcnone$} \Return \pcfalse
+  \EndIf
+  \State \Return \Call{TwoPhantomLoop}{$V,p,q,|V|+2,R\cup\{e_{tp},e_{sq}\}$}
+  \Comment{add the phantom edges}
+\EndFunction
+\Statex
+\Function{TwoPhantomLoop}{$V,p,q,\var{fuel},G$}
+  \State $W\gets V\cup\{p,q\}$
+  \For{$\var{fuel}$ rounds}
+    \Comment{each round joins two pieces}
+    \If{$\ncomp(W,G)=1$} \Return \pctrue
+      \Comment{one piece, a Hamiltonian path}
+    \EndIf
+    \State $(H,\var{bridges},\var{outcome})\gets\Call{RunPhase}{V,W,|W|+1,G,[\,]}$
+    \If{$\var{outcome}\in\{\textsf{stuck},\textsf{fuel}\}$} \Return \pcfalse
+    \EndIf
+    \State $G\gets\Call{ReducePieces}{V,W,H,\var{bridges},\var{outcome}}$
+    \Comment{one piece fewer, no bridges}
+  \EndFor
+  \State \Return $[\ncomp(W,G)=1]$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[htbp]
+\caption{\proc{RunPhase} (Lean \lean{runPhase}, \lean{PhaseS.lean})}
+\label{alg:runPhase}
+\begin{algorithmic}[1]
+\Function{RunPhase}{$V,W,\var{fuel},H,\var{bridges}$}
+  \Comment{$\var{bridges}$ is listed newest first}
+  \For{$\var{fuel}$ steps}
+    \State $\var{conn}\gets\pfn{ConnectedPairs}(W,H)$
+    \Comment{all pairs of points in one piece}
+    \State $c\gets$ the first merging cell of $V$ that is not a pair square
+    \Comment{\lean{findMergingCell}}
+    \If{$c\ne\pcnone$} \Return $(H,\var{bridges},\textsf{merge}\ c)$
+      \Comment{flipping $c$ joins two pieces}
+    \EndIf
+    \State $b\gets\pfn{FindRow}(V,\var{conn},H,\var{bridges})$
+    \Comment{a critical cell whose row is not stuck}
+    \If{$b=\pcnone$} \Return $(H,\var{bridges},\textsf{stuck})$
+    \EndIf
+    \If{$r_b$ is odd} \Return $(H,\var{bridges},\textsf{odd}\ b)$
+      \Comment{lowering the odd row joins two pieces}
+    \EndIf
+    \If{$\pfn{FlipSplits}(W,H,b)$}
+      \Comment{bridge step, undone or lowered later}
+      \State flip $E_b$ in $H$, \quad $\var{bridges}\gets b::\var{bridges}$
+      \Comment{one piece more}
+    \Else\ \Return $(H,\var{bridges},\textsf{twist}\ b)$
+      \Comment{even row, flipping $E_b$ splits nothing}
+    \EndIf
+  \EndFor
+  \State \Return $(H,\var{bridges},\textsf{fuel})$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:runPhase}, a bridge $b=(q_b,a_b,r_b)$ is a row of length $r_b$ from the cell $q_b$ in
+the frame with front $a_b$, and $E_b$ is its last cell $c_{r_b-1}$.
+Its fixed pair is $(c_{r_b-2},c_{r_b-1})$, and these two cells are \emph{pair squares} (Lean
+\lean{pairSqB}).
+$\pfn{ConnectedPairs}(W,H)$ (Lean \lean{connectedPairs}) is the set of pairs of points of $W$ that lie in one
+piece of $H$.
+A merging cell is an alternating cut cell (\lean{Alt}, \lean{isCutCell}).
+$\pfn{FindRow}$ (Lean \lean{findRow}) scans the cells $q$ of $V$ in order and for each the sides
+$a$ in the order bottom, top, left, right.
+It returns $(q,a,r)$ for the first $q$ that is critical in frame $a$ with dark back and light front
+(\lean{isCritical}), is not a square of any bridge, and has a row of length $r$ that is not stuck
+(\lean{scanRow}).
+\lean{scanRow} steps $j=1,2,\dots$ up to $|V|+1$ times.
+It ends with a row of length $j$ when the front arc of $c_{j-1}$ differs from that of $q$, and it
+ends stuck when $c_j$ is not a cell of $V$ or is a cut cell.
+$\pfn{FlipSplits}(W,H,b)$ (Lean \lean{flipSplits}) holds when, after the flip of $E_b$, the corners
+$b_1$ and $f_1$ of $E_b$ lie in different pieces.
+
+\begin{algorithm}[htbp]
+\caption{\proc{ReducePieces} (Lean \lean{reducePieces}, \lean{ReduceS.lean}) and
+  \proc{UndoBridges} (Lean \lean{applyAll} and \lean{undoPlan})}
+\label{alg:reducePieces}
+\begin{algorithmic}[1]
+\Function{ReducePieces}{$V,W,H,[b_1,\dots,b_k],\var{outcome}$}
+  \Comment{$b_1$ is the newest bridge}
+  \State $H_0\gets H$
+  \For{$i=1,\dots,k$}
+    \Comment{the states before each bridge (\lean{bridgeStatesConn})}
+    \State $H_i\gets H_{i-1}$ with $E_{b_i}$ flipped, \quad $\var{conn}_i\gets\pfn{ConnectedPairs}(W,H_i)$
+  \EndFor
+  \If{$\var{outcome}=\textsf{merge}\ c$}
+    \State $X\gets$ the first cell of $V$ with
+      $\pfn{IsGoodMergingCell}(W,H,[b_i],[\var{conn}_i],X)$, else $c$
+    \Comment{Theorem~R}
+    \State $(u,v)\gets\pfn{MergePair}(H,X)$, \quad flip $X$ in $H$
+    \Comment{half bridge}
+  \ElsIf{$\var{outcome}=\textsf{odd}\ b$ or $\var{outcome}=\textsf{twist}\ b$}
+    \State $(u,v)\gets\pfn{RowStartPair}(b)$
+    \State flip the cells $c_{r_b-1},\dots,c_1,c_0$ of the row of $b$ in $H$
+    \Comment{half bridge, lower the row}
+  \Else\ \Return $H$
+  \EndIf
+  \State \Return \Call{UndoBridges}{$H,[b_1,\dots,b_k],[\var{conn}_1,\dots,\var{conn}_k],(u,v)$}
+\EndFunction
+\Statex
+\Function{UndoBridges}{$H,[b_1,\dots,b_k],[\var{conn}_1,\dots,\var{conn}_k],(u,v)$}
+  \Comment{$(u,v)$ is the pending pair}
+  \For{$i=1,\dots,k$}
+    \Comment{the plan (\lean{undoPlan})}
+    \If{$u$ and $v$ are connected in $\var{conn}_i$}
+      \Comment{joined before $b_i$ was made}
+      \State $\var{op}_i\gets$ lower $b_i$, \quad $(u,v)\gets\pfn{RowStartPair}(b_i)$
+    \Else\ $\var{op}_i\gets$ undo $b_i$
+    \EndIf
+  \EndFor
+  \For{$i=1,\dots,k$}
+    \Comment{apply the plan (\lean{applyAll})}
+    \If{$\var{op}_i$ lowers $b_i$} flip the cells $c_{r_{b_i}-2},\dots,c_0$ of $b_i$ in $H$
+    \Else\ flip $E_{b_i}$ in $H$
+      \Comment{back to the state before $b_i$}
+    \EndIf
+  \EndFor
+  \State \Return $H$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:reducePieces}, $\var{conn}_i$ is the connection set of the state before bridge $b_i$
+was made.
+The half bridge joins the pieces of $u$ and $v$, and \proc{UndoBridges} removes the bridges while
+keeping that join.
+$\pfn{MergePair}(H,X)$ (Lean \lean{mergePair}) is the pair $(b_1,f_1)$ of $X$ in the frame with front
+top when the bottom of $X$ is dark and front right otherwise (\lean{altFrame}).
+$\pfn{RowStartPair}(b)$ (Lean \lean{rowStartPair}) is the pair $(b_1,f_1)$ of $q_b$ in the frame
+$a_b$.
+$\pfn{IsGoodMergingCell}$ (Lean \lean{isGoodMergingCell}) tests that $X$ is alternating, cut, and not a pair
+square, and that every bridge $b_i$ whose square beyond $E_{b_i}$ is $X$ is lowered by the plan
+started from $\pfn{MergePair}(H,X)$, so $X$ is good in the sense of Theorem~R.
+The plan and the operations are computed and applied in the order $b_1,\dots,b_k$, newest bridge
+first.
+
+\begin{algorithm}[htbp]
+\caption{\proc{FindFactor} (Lean \lean{findFactor} with \lean{augLoop}, \lean{augStep} and
+  \lean{layerAcc}) and \proc{AugmentingWalk} (Lean \lean{walk}), \lean{DFactor.lean}}
+\label{alg:findFactor}
+\begin{algorithmic}[1]
+\Function{FindFactor}{$V,d$}
+  \Comment{a factor with degrees $d$, or none}
+  \State $F\gets\emptyset$
+  \For{$|V|+1$ rounds}
+    \Comment{one augmentation per round (\lean{augLoop})}
+    \State $\var{layer}_0\gets\{z\in V : z \text{ black},\ \deg_F z<d(z)\}$
+    \Comment{deficient black points}
+    \For{$k=1,\dots,|V|$}
+      \Comment{\lean{layerAcc}}
+      \State $\var{layer}_k\gets\var{layer}_{k-1}\cup\pfn{AltNbrs}(V,F,\var{layer}_{k-1})$
+    \EndFor
+    \State $y\gets$ the least white $y\in\var{layer}_{|V|}$ with $\deg_F y<d(y)$
+    \Comment{a deficient white end}
+    \If{no such $y$} \pcbreak
+      \Comment{no augmenting walk is left}
+    \EndIf
+    \State $F\gets\Call{AugmentingWalk}{V,F,[\var{layer}_{|V|-1},\dots,\var{layer}_0],y}$
+  \EndFor
+  \If{$\deg_F z=d(z)$ for all $z\in V$} \Return $F$
+  \Else\ \Return \pcnone
+  \EndIf
+\EndFunction
+\Statex
+\Function{AugmentingWalk}{$V,F,[L_{n-1},\dots,L_0],v$}
+  \Comment{walk from $v$ back to a black start}
+  \State $F'\gets F$
+  \For{$k=n-1,\dots,0$}
+    \If{$v\notin L_k$}
+      \Comment{step back into layer $k$}
+      \State $e\gets$ the first edge $e$ at $v$ with $\pfn{IsBackEdge}(V,F,L_k,v,e)$
+      \If{$e=\pcnone$} \Return $F'$
+      \EndIf
+      \State $F'\gets F'\setminus\{e\}$ if $v$ is black, else $F'\cup\{e\}$
+      \Comment{toggle $e$}
+      \State $v\gets$ the other end of $e$
+    \EndIf
+  \EndFor
+  \State \Return $F'$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+In \cref{alg:findFactor}, a point $(x,y)$ is black when $x+y$ is even and white otherwise.
+$\pfn{AltNbrs}(V,F,u)$ (Lean \lean{nbr}) is the set of points joined to $u$ by an edge of $V$ that
+is not in $F$ when $u$ is black and in $F$ when $u$ is white.
+So $\var{layer}_k$ is the set of points reached from a deficient black point by an alternating
+walk of at most $k$ steps.
+$\pfn{IsBackEdge}(V,F,L,v,e)$ (Lean \lean{Bwd}) holds when $e$ is an edge of $V$ at $v$ whose other
+end is in $L$, with $e\in F$ when $v$ is black and $e\notin F$ when $v$ is white.
+It reads the factor $F$ of the start of the round, not $F'$.
+The edges at $v$ are tried in the order right, left, up, down.
+Each round toggles the edges of one augmenting walk from $y$ back to $\var{layer}_0$, and the
+rounds stop when no deficient white point is reachable.
