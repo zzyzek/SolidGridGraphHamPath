@@ -1,0 +1,145 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "Hamiltonian s–t paths in solid grid graphs are decidable in polynomial time"
+  description: >-
+    A computable algorithm, decideHamPath, that decides whether a solid grid graph (a finite set
+    of lattice points with no holes, with an edge between points at distance 1) has a Hamiltonian
+    path between two given distinct points, with a Lean 4 proof that it is correct. The problem
+    was posed by Itai, Papadimitriou and Szwarcfiter (1982). The algorithm extends Sheffield's
+    height-function algorithm for Hamiltonian cycles: each endpoint gets a phantom edge to a
+    missing neighbour, and an endpoint with all eight neighbours present becomes a hole whose
+    defect (a vortex) is handled by a slit height and a search over flip classes. The registered
+    statement is correctness. The library also proves a polynomial step bound,
+    5 220 000 (|V| + 3)^6, for cost functions written beside the algorithm, and formalizes the
+    Umans–Lenhart algorithm for Hamiltonian cycles in solid grid graphs.
+  authors:
+    - name: "Z. Zzyzek"
+      github: "zzyzek"
+  license: "CC0-1.0"
+  responsible_maintainers:
+    - name: "Z. Zzyzek"
+      github: "zzyzek"
+
+classification:
+  arxiv: ["cs.DM", "cs.CC"]
+  msc2020: ["05C45", "68R10", "68Q25"]
+
+sources:
+  - title: "Hamiltonian s–t paths in solid grid graphs are decided in polynomial time: an algorithm with a Lean 4 proof"
+    type: original-proof
+    relationship: other
+    authors:
+      - "Z. Zzyzek"
+    location: "https://github.com/zzyzek/SolidGridGraphHamPath (paper/hpst.tex)"
+    note: >-
+      The algorithm and its proof are first presented in this repository, with the paper in
+      paper/. The Lean proof is the primary artifact.
+  - title: "Hamilton paths in grid graphs"
+    type: article
+    relationship: background
+    authors:
+      - "A. Itai"
+      - "C. H. Papadimitriou"
+      - "J. L. Szwarcfiter"
+    location: "SIAM Journal on Computing 11 (1982), 676–686"
+    note: "Poses Hamiltonian paths in solid grid graphs as an open problem."
+  - title: "Hamiltonian cycles in solid grid graphs"
+    type: article
+    relationship: background
+    authors:
+      - "C. Umans"
+      - "W. Lenhart"
+    location: "Proceedings of the 38th IEEE Symposium on Foundations of Computer Science (1997), 496–505"
+    note: >-
+      The polynomial algorithm for Hamiltonian cycles. The library formalizes it (ulhc_main) and
+      builds on its grid, factor and flip machinery.
+  - title: "Computing and sampling restricted vertex degree subgraphs and Hamiltonian cycles"
+    type: article
+    relationship: background
+    authors:
+      - "S. Sheffield"
+    id: "arXiv:math/0008231"
+    location: "https://arxiv.org/abs/math/0008231"
+    note: >-
+      The height-function algorithm for Hamiltonian cycles that the path algorithm extends. The
+      paper's appendix describes a gap in its phase argument and the repair used here.
+
+related_formalizations: []
+
+status:
+  scope: >-
+    Formalized and registered: for every solid V and distinct s, t in V, decideHamPath V s t =
+    true exactly when V has an edge set with degree 1 at s and t, degree 2 elsewhere, and one
+    connected component (a Hamiltonian s–t path). Proved in the library but not part of the
+    registered statement: the step bound decideHamPathCost V s t ≤ 5 220 000 (|V| + 3)^6
+    (decideHamPath_main), where the cost functions are written beside the algorithm and
+    charge a constant for each primitive finite-set operation. This is not a Turing machine
+    time bound. Solid is defined by king-move escape of missing points. Its equivalence with
+    the usual definition (every bounded face is a unit square) is cross-checked by computation,
+    not proved in Lean. Endpoints are given. Paths with free endpoints follow by trying all
+    pairs, which is not formalized.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+  main_results:
+    - "SolidGridHam.HP.decideHamPath_correct"
+    - "SolidGridHam.HP.decideHamPath_main"
+    - "SolidGridHam.ulhc_main"
+
+automation:
+  methods:
+    - method: agent
+      models: ["Claude Opus 5.5"]
+      framework: "Claude Code"
+      tool_setup: >-
+        Claude Code agent with shell access, the Lean toolchain and Lake, Python for reference
+        implementations and experiments. The agent wrote the algorithm, the proofs, the paper,
+        the reference implementations and the demo.
+      cost:
+        wall_time: "not tracked"
+        spend_usd: "subscription-based"
+        hardware: "local machine (4 cores, 32 GB)"
+      prompting_notes: >-
+        The human posed the problem, set the goal of a complete Lean proof, and steered by review
+        and requests in conversation.
+  spend_usd: "subscription-based"
+  notes: >-
+    Nearly the entirety of the work was done by Claude (Opus 5.5), including the algorithm, the
+    paper, the reference implementations in C, Python and JavaScript, the demo, and the Lean 4
+    proof. The listed author contributed the problem statement and guidance.
+
+fidelity:
+  divergences: >-
+    No cited source states this theorem. Modelling choices to check: grid graphs are induced
+    (every two points of V at distance 1 are adjacent). Solid is the king-move escape
+    definition, cross-checked computationally against the face definition but not proved
+    equivalent. The registered statement is correctness of a computable algorithm whose loops
+    have explicit polynomial fuel. Its polynomial running time is proved only for a hand-checked
+    cost model in the library and is not part of the registered statement.
+
+review:
+  status: "self-assessed"
+  reviewers:
+    - "none"
+  notes: >-
+    The kernel checks the proofs, which use only propext, Classical.choice and Quot.sound. The
+    statement and its definitions were audited by the author and the agent. Independent
+    mathematical review has not taken place.
+
+alignment:
+  namespace: "SolidGridHam"
+  statements:
+    - source: "Main theorem, correctness (paper, Theorem 1.1)"
+      lean: "SolidGridHam.HP.decideHamPath_correct"
+      module: "SolidGridHam.Path.HPFinal"
+      status: "proved"
+      note: "The correctness half of decideHamPath_main."
+    - source: "Main theorem, correctness and step bound"
+      lean: "SolidGridHam.HP.decideHamPath_main"
+      module: "SolidGridHam.Path.HPFinal"
+      status: "proved"
+      note: "Not registered. The step bound is for the hand-checked cost model described above."
+
+acknowledgements: "Lean 4 and Mathlib."
