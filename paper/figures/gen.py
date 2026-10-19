@@ -936,13 +936,13 @@ def fig_sheffail():
     col = [(2, y) for y in range(-3, 4)]
     b = panel(Hp, box(col, "rowbox"), joins)
     write("fig_sheffail.tex", panel_row([a, b], ["(a) the stuck state $H$, $4$ pieces, $1$ fixed pair",
-                                                 "(b) $H'$, the column lowered, $3$ pieces"], "\\qquad"))
+                                                 "(b) $H'$, the chained row lowered, $3$ pieces"], "\\qquad"))
 
 
-# The strand pairing of a column of length L = 7 (cells c_0..c_6, left vertices v_i = (0,i), right
+# The strand pairing of a chained row of length L = 7 (cells c_0..c_6, left vertices v_i = (0,i), right
 # w_i = (1,i)), before and after lowering it.  Before: side edge v_i v_{i+1} in H iff i odd, inner
-# cross edge v_i w_i (0 < i < L) iff i even, the bottom side v_0 w_0 in H (the dark back of the
-# critical cell), the top side v_L w_L not.  Strands leave the column sideways at odd heights, and at
+# cross edge v_i w_i (0 < i < L) iff i even, and both end sides v_0 w_0 (the dark back of the
+# critical cell) and v_L w_L (the last front, dark because L is odd) in H.  Strands leave the column sideways at odd heights, and at
 # v_0, w_0 (down) and v_L, w_L (up).  Lowering toggles every side edge and the two end sides; the
 # inner cross edges are toggled twice.  Each connected strand gets one colour, keyed by the outside
 # stubs it joins, so equal colours before and after mean equal pairing.
@@ -961,7 +961,6 @@ def fig_strand():
                 E.add(((0, i), (1, i)))
         if not after:
             E.add(((0, 0), (1, 0)))
-        else:
             E.add(((0, L), (1, L)))
         return E
 

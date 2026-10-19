@@ -113,7 +113,7 @@
 
 \title{Hamiltonian $s$--$t$ paths in solid grid graphs\\are decided in polynomial time:\\an algorithm with a Lean~4 proof}
 \author{Z. Zzyzek}
-\date{2026-10-17 \\[2pt] \small Released under CC0 1.0 (public domain dedication).}
+\date{2026-10-19 \\[2pt] \small Released under CC0 1.0 (public domain dedication).}
 
 \begin{document}
 \maketitle
@@ -129,12 +129,13 @@ Hamiltonian $s$--$t$ path exists, and that it takes at most $5\,220\,000\,(|V|+3
 of explicit cost functions.
 Its only axioms are \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}.
 The algorithm extends Sheffield's height-function algorithm for Hamiltonian cycles.
-Each endpoint is moved off the vertex set as a phantom.
-An endpoint with all eight king neighbours present becomes a hole, and its degree-one defect is a
-vortex of the height field.
-A slit and a sector label give a potential that rises along every climb, which replaces the height
-function in Sheffield's counting argument.
-The count behind a stuck phase is proved with columns, straight runs of rows through several cuts.
+Each endpoint gets a phantom edge to a missing neighbour, which moves its degree-one defect off the
+vertex set.
+An endpoint with all eight king neighbours present is deleted and becomes a hole, and its
+degree-one defect is a vortex of the height field.
+A slit height and a quadrant label give a potential that rises along every arc, which replaces the
+height function in Sheffield's counting argument.
+The count behind a stuck phase is proved with chained rows, straight runs of rows through several cuts.
 \end{abstract}
 
 \section*{AI disclosure}
@@ -197,9 +198,6 @@ The correspondence between an algorithm and its cost function is checked by read
 definitions side by side.
 The constant $5\,220\,000$ is $208$ final tests of the deletion walks (\cref{sec:time}) times the
 constant $25\,000$ of one final test, plus the walks' own work.
-Earlier versions had $5^{12}\cdot 100100\approx 2.4\cdot 10^{13}$ (a branching factor of $5$ per
-deletion level) and, with king distance $3$ between the out-vertices,
-$5^{27}\cdot 25100\approx1.9\cdot10^{23}$.
 
 \paragraph{Prior work in brief.}
 Itai, Papadimitriou and Szwarcfiter posed the solid case~\cite{itai1982}.
@@ -213,7 +211,7 @@ The present work gives a written proof of the path case and checks it in Lean.
 
 \paragraph{Contributions.}
 \begin{enumerate}
-\item \emph{Columns}, which complete the count for a stuck phase, and a locally checkable
+\item \emph{Chained rows}, which complete the count for a stuck phase, and a locally checkable
   certificate for the ``no'' answer (\cref{sec:sheffield}).
 \item Phantom endpoints, which move a degree-one endpoint off the vertex set, and a two-phantom
   core under a distance condition (\cref{sec:phantom}).
@@ -259,7 +257,7 @@ Sheffield's algorithm repeats such flips, ordered by a height function.
 $q$ (red circles).
 Now $s$ and $t$ have degree $2$, as in a cycle.
 (d) An inner endpoint $t$ deleted, leaving a hole (grey cells).
-Two path factors of this leaf differ by the purple cycle, which goes around the hole.
+Two path factors of $V\setminus\{t\}$ differ by the purple cycle, which goes around the hole.
 No flip changes how many such cycles go around the hole, so the two factors lie in different
 classes
 (\cref{sec:classes}, \cref{fig:classes}).}
@@ -299,7 +297,9 @@ $t$ are far apart it takes no steps at all (\cref{sec:bulk}).
 
 \paragraph{Obstacle 2, an inner endpoint leaves a hole.}
 An endpoint whose eight king neighbours all lie in $V$ is \emph{inner}.
-Deleting it leaves a one-point hole, and the path factor has degree $1$ at the hole's centre.
+Deleting it leaves a one-point hole.
+The deleted endpoint becomes the phantom of its neighbour on the path, so the degree-one defect
+sits at the hole's centre.
 Around this point the arcs do not balance, which we call a \emph{vortex}, and no height function
 exists (\cref{sec:vortex}).
 Two things are lost, and each is put back separately.
@@ -321,13 +321,13 @@ Two things are lost, and each is put back separately.
   around the hole, and the class never changes under flips (\cref{fig:overview}d).
   Factors in different classes cannot be reached from each other by flips, so one run of Sheffield's
   loop no longer decides the question.
-  The algorithm therefore enumerates the classes, at most $2|U|+1$ per hole, builds the least factor
+  The algorithm therefore enumerates the classes, at most $2|V|+1$ per hole, builds the least factor
   of each class by a relaxation (\lean{classSearch}), and runs the loop in each class.
   Within one class Sheffield's argument works as before.
   \Cref{fig:classes} shows a leaf with two nonempty classes.
 \end{itemize}
 The class enumeration is the main source of the polynomial degree.
-Two inner endpoints give two holes and $(2|U|+1)^2$ class pairs (\cref{sec:two}).
+Two inner endpoints give two holes and at most $(2|V|+1)^2$ class pairs (\cref{sec:two}).
 
 \paragraph{The loop.}
 For each leaf of the deletion branching and each nonempty class, the algorithm runs Sheffield's
@@ -339,7 +339,7 @@ The reduction then undoes or lowers the bridges, and the round ends with one pie
 If a phase is stuck, the certificate proves that no factor of the class has fewer pieces, and the
 class is rejected.
 The answer is yes exactly when some leaf and some class reach a single piece.
-The count behind a stuck phase uses columns (\cref{sec:repair}).
+The count behind a stuck phase uses chained rows (\cref{sec:repair}).
 
 \paragraph{What is essential and what is bookkeeping.}
 \Cref{tab:components} lists the components.
@@ -354,7 +354,7 @@ The rest makes them applicable everywhere, at a constant or polynomial price.
 component & why it is there & cost & kind & where \\
 \midrule
 loop (phase, reduction, certificate) & Sheffield's cycle algorithm, joins pieces or proves none can be joined & $O(N^3)$ per round, $\le N$ rounds & core & \cref{sec:sheffield}, \cref{alg:twoPhantomLoop,alg:runPhase} \\
-columns & complete the count for a stuck phase & none at run time & proof & \cref{sec:repair} \\
+chained rows & complete the count for a stuck phase & none at run time & proof & \cref{sec:repair} \\
 phantoms, Far, not opposed & give endpoints degree $2$ so the loop applies & constant & core & \cref{sec:phantom} \\
 deletion walk & bring endpoints into the Far, not opposed position & $\le 16\cdot13$ final tests & bookkeeping & \cref{sec:walk,sec:one}, \cref{alg:boundaryEndpointsWalk,alg:holeCaseWalk} \\
 slit height, quadrant label & replace the height at a vortex & none at run time & core (proof) & \cref{sec:vortex} \\
@@ -489,7 +489,7 @@ source--black--white--sink network, with capacity $d$ at the points and $1$ on t
 this network, with at most $|V|+1$ augmentations and every choice fixed.
 It returns a factor when one exists (\lean{findFactor\_some}), and returns none only when no factor
 exists (\lean{findFactor\_none}), at cost $O((|V|+1)^3)$ (\lean{DFC.findFactorCost\_le}).
-The factor usually has several pieces.
+The factor can have several pieces, as in \cref{fig:example}c and \cref{fig:classsearch}a.
 \Cref{app:flow} gives the network, the colour conditions that degree $1$ at $s$ and $t$ imposes,
 and two examples.
 
@@ -530,8 +530,18 @@ The colour of the square on each side of an edge is fixed by which end of the ed
 Walk along an edge from its black end to its white end.
 If the edge is dark, its arc crosses it from right to left.
 If the edge is light, its arc crosses it from left to right.
-This agrees with \lean{outArc} on every edge (checked on all edges of random edge sets on a
-$5\times5$ block).
+To see this, let $e$ run from $(x,y)$ one step right or up, and let $\beta$ be true when $x+y$ is
+even, so that the square below or left of $e$ is odd exactly when $\beta$ holds.
+For horizontal $e$, \cref{def:arc} applied to the square below says that the arc points up exactly
+when $e$ is dark and $\beta$ holds or $e$ is light and $\beta$ fails.
+The walk goes right from $(x,y)$ when $\beta$ holds, so up is on its left, and left from $(x+1,y)$
+otherwise, so up is on its right.
+For vertical $e$, \cref{def:arc} applied to the square left of $e$ says that the arc points right
+exactly when $e$ is light and $\beta$ holds or $e$ is dark and $\beta$ fails.
+The walk goes up from $(x,y)$ when $\beta$ holds, so right is on its right, and down from
+$(x,y+1)$ otherwise, so right is on its left.
+In all four cases a dark edge's arc crosses from right to left and a light edge's from left to
+right.
 
 The rule is antisymmetric.
 Seen from the square on the other side of $e$ (of the other colour), the same arc points in.
@@ -851,7 +861,7 @@ $\lean{Cert}\ V\ H\ \mathrm{FP}\ t_0\ u_0$ is the conjunction of the following l
 \item No cell with joined back corners, joined front corners and different back and front pieces
   has both back and front light (\lean{l4}).
 \item Pair squares are alternating, the shared side of a pair is dark, and pairs are disjoint.
-\item For every critical cell with dark back that is not a pair square, its \emph{column}
+\item For every critical cell with dark back that is not a pair square, its \emph{chained row}
   (\cref{sec:repair}) ends at a pair square of its direction, or it leaves $V$ with all its arcs
   pointing one way (\lean{col}).
 \item The same holds for strips that start beside the square just beyond a pair (\lean{side}).
@@ -886,44 +896,51 @@ It does not depend on the phase rules.
 The phase rules are needed only for completeness, that is, for showing that a phase ends in a
 merge or in a certified state.
 
-\subsection{Columns and the stuck case}
+\subsection{Chained rows and the stuck case}
 \label{sec:repair}
 
 The count behind \cref{thm:cert} compares a stuck state $H$ with a competitor $H'$.
 Fixed pairs are moved along rows toward $H'$, and the cut components on which $D(H,H')$ is not
 constant are then counted.
-A critical cell can be stuck against another cut cell, and the row then continues through several
-cuts as one straight column.
-Sheffield's written argument (his \S4.8) treats rows only, and \cref{app:repair} shows where columns
-change the count.
+In Sheffield's \S4.5, as in \cref{def:row}, a row stops where its front arc turns, and a critical
+cell is stuck when its row first reaches a square that is not a cell or is a cut cell.
+Rows run in all four directions.
+His move in \S4.8 lowers rows that end at a fixed pair.
+A stuck row can instead end at a cut cell $g$ of another cut that is higher than the cell before it.
+Then $g$ is critical and its row continues in the same direction, possibly through further cut
+cells, until it reaches a fixed pair.
+The whole straight run is a \emph{chained row}.
+It differs from a row not in direction but in passing through cut cells.
+Lowering it reroutes strands at those cut cells without joining pieces there, and
+\cref{app:repair} shows that Sheffield's count reads this rerouting as joining.
 
-\begin{definition}[strip, column]
+\begin{definition}[strip, chained row]
 A \emph{strip} of length $n$ from $c$ is a straight run $c_0,\dots,c_{n-1}$ with dark back of $c_0$,
 laterals of $c_j$ dark exactly for odd $j$, and the front of $c_j$ dark exactly for odd $j$, except
 that the last front is dark exactly when $n$ is odd (Lean \lean{StripPat}).
-A \emph{column} is a strip through critical cells and plain strip cells, ending at a fixed-pair
-square (Lean \lean{ColEnds}).
+A \emph{chained row} is a strip through critical cells and plain strip cells, ending at a fixed-pair
+square (Lean \lean{ColEnds}, where the Lean files call it a column).
 \end{definition}
 
-\begin{lemma}[column lemma, \lean{ColProof.lean}]
+\begin{lemma}[chaining lemma, \lean{ColProof.lean}]
 Let $f$ be critical, and let its row run into a cut cell $g$ that is higher than the cell before it.
 Then $g$ is critical, extremal along its cut, and its row continues in the same direction.
 \end{lemma}
 
 \begin{lemma}[strand pairing, \lean{lowerCol\_count}, \lean{Column.lean}]
 \label{lem:strand}
-Lowering a column toggles all its laterals and its two end sides.
-It keeps the pairing of the strands that enter and leave the column at odd heights.
-Only the two ends of the column change pieces.
-So a column changes the number of pieces exactly as one row of the same length.
+Lowering a chained row toggles all its laterals and its two end sides.
+It keeps the pairing of the strands that enter and leave it at odd heights.
+Only the two ends of the chained row change pieces.
+So a chained row changes the number of pieces exactly as one row of the same length.
 \end{lemma}
 
-The proof uses columns in place of rows in the move.
-A \emph{generalized move} at a critical cell $c$ with $D$ of its direction's sign lowers the column
+The proof uses chained rows in place of rows in the move.
+A \emph{generalized move} at a critical cell $c$ with $D$ of its direction's sign lowers the chained row
 from $c_1$ to its top and makes $(c_0,c_1)$ the new fixed pair.
 It keeps the number of pieces (\cref{lem:strand}), keeps the invariant \lean{Inv}
 (\lean{MoveInv.lean}, \lean{ColAfter.lean}, \lean{SideAfter.lean}, \lean{E1After.lean}), and lowers
-$\mu=\sum_c|D(H,H')(c)|$ by $2(L-1)$ for a column of length $L$.
+$\mu=\sum_c|D(H,H')(c)|$ by $2(L-1)$ for a chained row of length $L$.
 After all moves, every cut component on which $D\ne0$ contains a fixed-pair square of the right
 sign.
 The count then uses a rank bound that sees only these joins (\lean{ncomp\_le\_of\_joins},
@@ -939,7 +956,7 @@ $\ncomp(W,H)\le\ncomp(W,H')+|\mathrm{FP}|$.
 
 The proof is an induction on $\mu$.
 \lean{Cert} implies \lean{Inv} for every competitor (\lean{cert\_inv}).
-A column that leaves $V$ cannot carry $D$ of its direction's sign, because $D$ grows along arcs and
+A chained row that leaves $V$ cannot carry $D$ of its direction's sign, because $D$ grows along arcs and
 vanishes off the cells (\lean{not\_colOut}).
 
 \subsection{Climbs}
@@ -990,7 +1007,7 @@ Here $N=|W|+1$.
 
 Sheffield's argument needs degree $2$ at every corner of a flipped cell.
 A path endpoint has degree $1$.
-The fix is to move each endpoint off $V$.
+The fix is to move the degree-one defect of each endpoint off $V$.
 
 \begin{definition}[phantom]
 Let $t\in V$ have a missing lattice neighbour $p$.
@@ -1035,10 +1052,9 @@ $t$ and $q$ of $s$ are not opposed (\lean{TwoPh.lean}).
 \lean{FarN} gives \lean{NoOpp} for every two-phantom factor (\lean{two\_noOpp}).
 \end{definition}
 
-The certificate argument was first written with one out-vertex.
-Every place that used uniqueness was found by the Lean compiler when the second out-vertex was
-added (\lean{l4\_of}, \lean{tri\_of}, \lean{a2p}, \lean{side\_or\_t}, \lean{t\_farA}, and others).
-Almost every site closes under Far, because two different corners of one cell lie within king
+Several sites of the certificate argument concern the out-vertex (\lean{l4\_of}, \lean{tri\_of},
+\lean{a2p}, \lean{side\_or\_t}, \lean{t\_farA}, and others).
+With two out-vertices almost every site closes under Far, because two different corners of one cell lie within king
 distance $1$ (\lean{two\_sides}, \lean{corners\_close}).
 Two sites need more, \lean{t\_farA2} and \lean{t\_farB2} in the proof of Theorem~R (its Lemma~2.3,
 the crossed configuration).
@@ -1046,9 +1062,6 @@ There one out-vertex sits at a corner of the bridge end $E$ and the other at a c
 steps away, at king distance $2$ in the worst case.
 Both sites close by \lean{NoOpp}, using the phantom positions returned by \lean{side\_or\_t}.
 So \lean{theoremR} takes the hypotheses Far and \lean{NoOpp} for the start factor of the phase.
-Without Far the certificate field L4 can be false in a real stuck state.
-Such states exist with $s$ and $t$ on one grid line at distance $1$ or $2$ and phantoms pointing away
-from each other.
 
 \begin{theorem}[\lean{hpSheffC2\_main}, \lean{TwoPhCost.lean}]
 \label{thm:twoph}
@@ -1217,7 +1230,9 @@ crossing of the slit, $-\delta$ for a downward crossing, and $0$ otherwise.
 So $\Phi$ rises strictly along every step, and a closed walk would return $\Phi$ to its start value.
 \end{proof}
 
-No Jordan curve argument is used.
+The proof uses only the local inequality $\Delta\Phi\ge1$ across each arc.
+It does not argue about which cells a closed walk encloses, so no planar topology (such as the
+Jordan curve theorem) is needed, which keeps the Lean proof elementary.
 \lean{arcAcyc\_transfer} passes the conclusion to a subset of the cells and to any factor whose arcs
 agree on the sides between those cells.
 
@@ -1260,7 +1275,7 @@ in the direction of the arc of $F$}, which raises every cell to the least value 
 
 Put together, the algorithm runs Sheffield's loop once for every possible number $k$ of fences
 around the hole, with $k$ counted with its sign.
-Since $|k|\le|U|$, at most $2|U|+1$ values need to be tried, and $(2|U|+1)^2$ pairs with two holes.
+Since $|k|\le|V'|$, at most $2|V'|+1$ values need to be tried, and $(2|V'|+1)^2$ pairs with two holes.
 For each value the relaxation either finds a factor of that class, which is then the starting factor
 of the loop for that class, or shows that the class is empty.
 If any factor of the class exists, the relaxation finds one, so no class that could hold a
@@ -1278,8 +1293,9 @@ Since $F\oplus G$ is a union of alternating cycles and $D(F,G)$ changes by $\pm2
 its edges, $h(G)$ is the signed number of these cycles that go around the hole.
 
 \paragraph{Classes in an example.}
-\Cref{fig:classes} shows a leaf of the $4\times5$ block with $s=(1,0)$ and inner $t=(2,2)$, in the
-branch $w=(3,2)$, $x=(0,0)$.
+\Cref{fig:classes} shows a leaf of the $4\times5$ block with $s=(1,0)$ and inner $t=(2,2)$.
+In this leaf the neighbour of $t$ on the path is $w=(3,2)$ and the successor of $s$ is $x=(0,0)$
+(\cref{sec:one}).
 Its factors fall into exactly two classes, $h=0$ and $h=1$.
 The least factors $G_0$ and $G_1$ of the two classes differ by a single alternating $12$-cycle, which
 goes around the hole (\cref{fig:classes}c).
@@ -1652,13 +1668,14 @@ One round of the fast loop (a phase and its reduction) costs at most $3000(|V|+3
 (\lean{twoPhantomLoopCost\_le}).
 The loop runs at most $|V|+2$ rounds, which gives degree $4$ (\lean{twoPhantomTestCost\_le}).
 In the hole cases the loop runs once per class, and the class search costs $O(N^4)$ per class.
-One hole has $2|U|+1$ classes, which gives degree $5$.
+One hole has $2|U|+1$ classes, where $U$ is the set left after the deletions, which gives degree
+$5$.
 Two holes have $(2|U|+1)^2$ class pairs, which gives degree $6$.
 The leading constants count the final tests of the deletion walks.
 In the hole cases the two deletions before the walk give $4\cdot4=16$ walk starts, and each walk
 makes at most $13$ final tests and visits at most $21$ nodes (\cref{par:ring}), so $208$ final tests
 of cost at most $12\,000\,(|U|+3)^5$ (one hole) or $25\,000\,(|U|+3)^6$ (two holes).
-In case~A the first step of the walk has no deleted neighbour yet, so a walk makes at most
+When neither endpoint is inner, the first step of the walk has no deleted neighbour yet, so a walk makes at most
 $4\cdot13=52$ final tests, and the possible deletion of $s$ before it gives $4$ walks.
 
 \paragraph{Caveats.}
@@ -1672,29 +1689,32 @@ The companion Umans--Lenhart formalization in the same repository uses a step-co
 
 \paragraph{The walk constant: the ring potential.}
 \label{par:ring}
-Fix the walk's centre $w$ and its hole $t$ (in case~A: the centre $s$ and its phantom $q$).
+Fix the walk's centre $w$ and its hole $t$ (when neither endpoint is inner, the centre $s$ and its
+phantom $q$).
 The king neighbours of $w$ other than $t$ form a path of $7$ points around $w$, the \emph{ring},
 numbered $0,\dots,6$ (\lean{pidx}, \lean{ptAt}).
 From ring point $i$ a lattice step goes to $w$, to $t$, to ring point $i\pm1$, or outward to king
-distance $2$; a corner of the ring has $2$ outward steps and an edge midpoint $1$ (\lean{outI},
+distance $2$.
+A corner of the ring has $2$ outward steps and an edge midpoint $1$ (\lean{outI},
 \lean{cat\_counts}).
-The walk continues only from a ring point, or from distance $2$ with an opposed phantom; an outward
-step from the ring stops, since the phantom (the ring point just left) is not opposed.
+The walk continues only from a ring point, or from distance $2$ with an opposed phantom.
+An outward step from the ring stops, since the phantom (the ring point just left) is not opposed.
 Let the weight of a present ring point be its number of outward steps.
 The leaf potential $L$ of a walk state is $0$ when at most $2$ points remain, $1$ at a stop, $13$ in
 an opposed state, and on ring point $i$ the weight of $i$ plus the weights of the unbroken runs of
 present ring points on both sides of $i$ (\lean{Lp}).
 The $7$ weights sum to $11$, so $L\le13$.
-A step along the ring to $i+1$ deletes $i$ and leaves the child with the run after $i$ only, an
-outward step is a stop worth $1$, paid by the weight of $i$; so the children's potentials sum to at
-most $L$ (\lean{ring\_step}).
-An opposed state at king distance $2$ has four lattice steps: onto its phantom (absent), one toward
-$w$ (potential at most $11$), and two sideways, which stay at distance $2$ and stop; so its
-children sum to at most $11+1+1=13$ (\lean{opp\_step}).
-Hence a walk makes at most $13$ final tests; the node potential $M$ with weights $1+$(outward steps)
-bounds its nodes by $21$ (\lean{holeCaseWalkCost\_pot}, \lean{boundaryEndpointsWalkCost\_pot}).
-All facts about the ring are checked by \lean{decide} on the $4$ rotations and $28$ relative
-positions.
+A step along the ring to $i+1$ deletes $i$ and leaves the child with the run after $i$ only.
+An outward step is a stop worth $1$, paid by the weight of $i$.
+So the children's potentials sum to at most $L$ (\lean{ring\_step}).
+An opposed state at king distance $2$ has four lattice steps.
+One goes onto its phantom, which is absent, one goes toward $w$ (potential at most $11$), and two go
+sideways, stay at distance $2$ and stop.
+So its children sum to at most $11+1+1=13$ (\lean{opp\_step}).
+Hence a walk makes at most $13$ final tests.
+The node potential $M$, with weight $1$ plus the number of outward steps, bounds its nodes by $21$ (\lean{holeCaseWalkCost\_pot}, \lean{boundaryEndpointsWalkCost\_pot}).
+All facts about the ring are proved by \lean{decide}, which evaluates them exhaustively over the $4$
+rotations and $28$ relative positions.
 
 \input{pseudocode.tex}
 
@@ -1706,9 +1726,12 @@ positions.
 The proof is in the Lean~4 library \lean{SolidGridHam}~\cite{lean4} with Mathlib~\cite{mathlib2020}.
 The toolchain is pinned to \lean{leanprover/lean4:v4.35.0-rc2} (\lean{lean/lean-toolchain}), and
 Mathlib to the revision in \lean{lean/lake-manifest.json}.
-The $s$--$t$ path development is in \lean{lean/SolidGridHam/Path/}, $98$ files and about $27{,}600$
+The library, the reference implementations and this paper are at
+\url{https://github.com/zzyzek/SolidGridGraphHamPath}.
+The $s$--$t$ path development is in \lean{lean/SolidGridHam/Path/}, $98$ files and about $27{,}500$
 lines.
-The definitions in the statement are in \lean{lean/SolidGridHam/Basic/}.
+The algorithm and every definition in the statement are in \lean{lean/SolidGridHam/Algorithm.lean},
+about $950$ lines.
 It builds on the grid, height and strip libraries of the companion Umans--Lenhart formalization
 (\lean{ulhc\_main}) in the same repository.
 \Cref{app:map} maps the ideas of this paper to modules.
@@ -1718,7 +1741,7 @@ The command \lean{\#print axioms} applied to
 \lean{SolidGridHam.HP.decideHamPath\_main} lists \lean{propext}, \lean{Classical.choice} and
 \lean{Quot.sound}.
 The same holds for \lean{stuck\_minimal} and \lean{arc\_vortex2}.
-These outputs were obtained from the built library on 2026-10-17.
+These outputs were obtained from the built library on 2026-10-18.
 No file of the library contains \lean{sorry}, and the build has no warnings.
 
 \paragraph{Trusted definitions.}
@@ -1751,6 +1774,10 @@ The implementations are not verified.
 With \lean{elan} installed, run \lean{lake exe cache get} and \lean{lake build} in \lean{lean/}.
 Then run \lean{lake env lean} on a file containing
 \lean{import SolidGridHam.Path.HPFinal} and \lean{\#print axioms SolidGridHam.HP.decideHamPath\_main}.
+The script \lean{scripts/check.sh} does all of this.
+It builds the library with warnings treated as errors, prints the axioms of the main results, fails
+unless they are \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}, and runs the cost-model
+lint of the Umans--Lenhart part.
 
 % =====================================================================
 \section{Worked example}
@@ -2040,6 +2067,30 @@ The class enumeration gives the factor $2|U|+1$ per hole, the class search costs
 and the loop costs $O(N^3)$ per round for at most $|V|+2$ rounds.
 With two holes this is $O(N^2)\cdot(O(N^4)+O(N^4))=O(N^6)$.
 
+\section{Conclusion}
+\label{sec:conclusion}
+
+Hamiltonian $s$--$t$ paths in solid grid graphs are decided in polynomial time, by an algorithm
+whose correctness and step bound are proved in Lean~4.
+The bound is $5\,220\,000\,(|V|+3)^6$ steps for all positions of the endpoints, and
+$O(|V|^4)$ when neither endpoint is inner.
+The algorithm extends Sheffield's height-function method for Hamiltonian cycles.
+Phantom edges give the endpoints degree $2$, deletion walks bring them to a configuration where
+the phantoms do not interfere, and an inner endpoint becomes a vortex, handled by a slit height
+and a search over flip classes.
+The proof also repairs the stuck case of Sheffield's counting argument with chained rows.
+
+Two points are checked outside Lean.
+The definition of \lean{Solid} is cross-checked by computation against the face definition, not
+proved equivalent.
+The step bound is for cost functions that mirror the algorithm, with a constant cost for each
+primitive operation on finite sets, and it is not a Turing machine bound.
+The correctness statement alone is registered with the Palomar registry as
+PALOMAR-2026-10-19-000001.
+
+The Lean library, the reference implementations in Python, C and JavaScript, an interactive demo
+and the source of this paper are at \url{https://github.com/zzyzek/SolidGridGraphHamPath}.
+
 % =====================================================================
 \appendix
 
@@ -2100,13 +2151,13 @@ His Theorem~8 indexes flip components of $2$-factors with holes by the relative 
 which is the idea behind \cref{sec:classes}.
 New here are the following.
 \begin{itemize}
-\item The column repair of \S4.8 and the locally checkable certificate \lean{Cert}.
+\item The chained-row repair of \S4.8 and the locally checkable certificate \lean{Cert}.
 \item A computable choice rule for the merging cell (Theorem~R) that avoids one unexcluded
   configuration of Lemma~4.
 \item Phantom endpoints, the two-phantom core under the Far condition, and the deletion walks.
 \item Classes relative to phantom and deleted endpoints, and the class search by relaxation, ported
   from the author's Lean formalization of Umans--Lenhart with holes.
-\item The handling of degree-one defects by slits and sector labels.
+\item The handling of degree-one defects by slit heights with quadrant and three-sector labels.
 \end{itemize}
 
 \paragraph{Vortices.}
@@ -2119,8 +2170,8 @@ These works use the defect for scaling and correlation computations.
 For domino tilings of regions with holes, Saldanha, Tomei, Casarin and Romualdo describe flip
 components through height sections on a covering~\cite{saldanha1995}.
 Thurston's height functions for tilings are background~\cite{thurston1990}.
-We did not find the slit plus sector-label potential used to rule out closed climbs in the
-literature.
+We did not find the potential built from a slit height and a sector label, used here to rule out
+closed climbs, in the literature.
 The literature search does not prove that it is absent.
 
 \paragraph{Formal verification.}
@@ -2132,7 +2183,7 @@ algorithm (\lean{ulhc\_main}, same repository).
 \label{app:map}
 
 The files below are under \lean{lean/SolidGridHam/Path/}.
-The definitions in the statement are in \lean{lean/SolidGridHam/Basic/}, the Umans--Lenhart
+The algorithm and the definitions in the statement are in \lean{lean/SolidGridHam/Algorithm.lean}, the Umans--Lenhart
 library that the path development builds on is in \lean{lean/SolidGridHam/Cycle/}, and lemmas on
 path factors and notches are in \lean{lean/SolidGridHam/Path/Prelim/}.
 
@@ -2216,9 +2267,9 @@ With two holes the same argument uses both prescribed values.
 
 \subsection{Strand pairing (\cref{lem:strand})}
 
-Index a column of length $L$ from its bottom cell (index $0$) to its top cell (index $L-1$).
+Index a chained row of length $L$ from its bottom cell (index $0$) to its top cell (index $L-1$).
 Let $v_0,\dots,v_L$ and $w_0,\dots,w_L$ be its left and right corners.
-Along the column the lateral $v_iv_{i+1}$ is dark exactly for odd $i$, the cross edge $v_iw_i$
+Along the chained row the lateral $v_iv_{i+1}$ is dark exactly for odd $i$, the cross edge $v_iw_i$
 ($0<i<L$) is dark exactly for even $i$, and by degree $2$ the outward edge at $v_i$ is dark exactly
 for odd $i$.
 Before lowering, for each odd $i$ the left strand at height $i$ is joined to the right strand at
@@ -2242,7 +2293,7 @@ one front corner of $E$ merged, and these two classes differ in the new state
 So each bridge step adds exactly one piece (Lemma~I.1, \lean{step\_count}).
 
 % =====================================================================
-\section{Sheffield's stuck case and columns}
+\section{Sheffield's stuck case and chained rows}
 \label{app:repair}
 
 \paragraph{Sheffield's argument.}
@@ -2252,37 +2303,35 @@ He moves fixed pairs along rows toward $H'$, until every cut component on which 
 constant contains a fixed-pair square.
 He then bounds the pieces of $H'$ from below by the pieces of $H$ minus the number of $H'$-edges that
 join two pieces of $H$, counted as the rank of a graph on the pieces (his Lemma~2).
-Two steps of this argument need columns.
+Two steps of this argument need chained rows.
 
 \paragraph{A row stuck against a cut cell.}
-The text treats a critical cell whose row runs into the outside of $V$.
-A row can also run into another cut cell $g$, as at $f=(2,3)$ in \cref{fig:sheffail}a.
+The text rules out a row that runs into a hole or the outside of $V$, because $D(H,H')=0$ there.
+It does not treat a row that runs into another cut cell $g$, as at $f=(2,3)$ in \cref{fig:sheffail}a.
 Its row $f,(2,2),(2,1),(2,0)$ (dashed) runs down into the cut cell $g=(2,-1)$ (purple), which is
 critical for a different cut, and the row of $g$ continues down to the only fixed pair (orange).
 Moves of rows never change cut cells, so they cannot remove this situation.
-By the column lemma of \cref{sec:repair} such chains are always straight, and the whole run from $f$
-to the fixed pair is one column of length $7$.
+By the chaining lemma of \cref{sec:repair} such chains are always straight, and the whole run from
+$f$ to the fixed pair is one chained row of length $7$.
 
 \paragraph{The count sees rerouting as joining.}
-Lower the whole column of \cref{fig:sheffail}a.
+Lower the whole chained row of \cref{fig:sheffail}a.
 The result $H'$ (\cref{fig:sheffail}b) has $3$ pieces, one fewer than $H$, as it must with one fixed
 pair.
 Four edges of $H'$ join two pieces of $H$ (highlighted in yellow), at the two ends of $f$ and of $g$, and they join
 three pieces of $H$ into one, so the rank of Sheffield's graph is $2$.
 The bound then gives only $4-2=2$ pieces for $H'$, below the $m=3$ that the theorem asserts.
 The edges at $g$ do not join pieces of $H'$.
-They reroute strands through the column, and the only net join is at its bottom end.
-The same happens in every stuck state with such a column that was examined, nine in all.
-The theorem holds in each of them.
+They reroute strands through the chained row, and the only net join is at its bottom end.
 
 \begin{figure}[ht]
 \centering
 \input{figures/fig_sheffail.tex}
-\caption{Where Sheffield's count needs columns.
+\caption{Where Sheffield's count needs chained rows.
 (a) A stuck $2$-factor $H$ on $64$ points with $4$ pieces (colours) and one fixed pair (orange).
 The row of the critical cell $f$ (dashed) runs into the cut cell $g$ (purple), whose row continues
 to the fixed pair.
-(b) The competitor $H'$, which is $H$ with the column from $f$ to the fixed pair (dashed) lowered.
+(b) The competitor $H'$, which is $H$ with the chained row from $f$ to the fixed pair (dashed) lowered.
 It has $3$ pieces.
 The highlighted edges of $H'$ join two pieces of $H$, and Sheffield's rank count treats them as two joins,
 while $H'$ has only one piece fewer than $H$.}
@@ -2290,14 +2339,18 @@ while $H'$ has only one piece fewer than $H$.}
 \end{figure}
 
 \paragraph{The fix.}
-Columns behave like rows (\cref{lem:strand}).
-Along a column the laterals are dark exactly at odd heights, the inner cross sides at even heights,
-and strands leave the column sideways at odd heights.
-Lowering the column toggles the laterals and the two end sides, and the inner cross sides twice.
-Every inner strand is joined to the same partner before and after (\cref{fig:strand}), and only the
-strands at the two ends change.
-So lowering a column changes the pieces exactly as lowering one row of the same length.
-The proof replaces Sheffield's move by a move along a column (\cref{sec:repair}).
+Sheffield's rows run in all four directions, and he reduces the other sign and the other
+orientations to one case by symmetry.
+His \S4.8 move covers rows that end at a fixed pair.
+When a row ends at a cut cell, the move lowers the whole chained row through the cut cells, and the
+count does not treat the edges at those cut cells as joins.
+Strand pairing (\cref{lem:strand}) shows that they are not joins.
+Along a chained row the laterals are dark exactly at odd heights, the inner cross sides at even
+heights, and strands leave it sideways at odd heights.
+Lowering it toggles the laterals and the two end sides, and the inner cross sides twice.
+Every inner strand keeps its partner (\cref{fig:strand}).
+So lowering a chained row changes the pieces exactly as lowering one row of the same length.
+The proof replaces Sheffield's move by a move along a chained row (\cref{sec:repair}).
 After the moves every cut component on which $D\ne0$ contains a fixed-pair square of the right sign,
 and the final count uses only these joins (\lean{ncomp\_le\_of\_joins}, \lean{Rank.lean}).
 The result is \lean{stuck\_minimal}, and through \lean{cert\_inv} it gives \cref{thm:cert}.
@@ -2305,13 +2358,15 @@ The result is \lean{stuck\_minimal}, and through \lean{cert\_inv} it gives \cref
 \begin{figure}[ht]
 \centering
 \input{figures/fig_strand.tex}
-\caption{Strand pairing in a column of length $7$, cells $c_0,\dots,c_6$.
-Each colour is one strand of the factor inside the column, together with the outside strands it
-joins.
-(a) Before lowering, the strand leaving the column on the left at height $3$ returns on the right
+\caption{Strand pairing in a chained row of length $7$, cells $c_0,\dots,c_6$.
+Every point has degree $2$, counting the stubs that leave the chained row.
+Each colour is one strand of the factor inside the chained row, together with the outside strands
+it joins.
+(a) Before lowering, the strand leaving on the left at height $3$ returns on the right
 at height $3$, and likewise at height $5$.
 (b) After lowering, the same pairs are joined through the other side of the U-turn.
-Only the strands at the two ends of the column change, and they get new colours.}
+The strand through the top end is rerouted through $c_6$ but keeps its partner and its colour.
+Only the strands at the bottom end change partners, and they get new colours.}
 \label{fig:strand}
 \end{figure}
 
@@ -2367,11 +2422,11 @@ The black side has capacity $2+2+2+1+1=8$ and the white side $4\cdot2=8$.
 The extra black point is balanced because both endpoints of capacity $1$ are black.
 The flow drawn in (b) saturates every source and sink arc, so it is a factor, but it is an
 $L$-shaped path from $s$ to $t$ together with a $4$-cycle in the upper left.
-A maximum flow only controls degrees, not connectivity, and the starting factor usually has several
+A maximum flow only controls degrees, not connectivity, so the starting factor can have several
 pieces.
 Joining them is the work of the loop (\cref{sec:sheffield}).
-On this small block \lean{findFactor} happens to return a Hamiltonian path, but on larger sets its
-factor usually has several pieces, as in \cref{fig:classsearch}a.
+On this small block \lean{findFactor} returns a Hamiltonian path, and in \cref{fig:classsearch}a it
+returns a factor with several pieces.
 
 \begin{figure}[H]
 \centering
