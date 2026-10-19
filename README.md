@@ -90,7 +90,7 @@ table in `lean/SolidGridHam/Cycle/Timed/TimeM.lean` and the lint `checks/timed_l
   * [`lib/README.md`](lib/README.md) documents the input format, the command lines and the tests.
 * `demo/`: an interactive browser demo of the JavaScript implementation.
 * `checks/`: cross-checks of `Solid`, sanity runs and the cost-model lint.
-* `scripts/`: `check.sh` (release check) and `sanity.sh`.
+* `scripts/`: `check.sh` (release check).
 
 ## Building and checking
 
