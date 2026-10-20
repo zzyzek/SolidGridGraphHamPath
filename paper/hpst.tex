@@ -72,6 +72,10 @@
   delpath/.style={teal!70,line width=3pt,opacity=0.6,line cap=round},
   holecell/.style={gray!25},
   hicell/.style={yellow!45},
+  chgcell/.style={green!22},
+  candbox/.style={orng,thick,dashed},
+  qbox/.style={pcD,very thick},
+  qarrow/.style={pcD,thick,-{Stealth[length=4pt]}},
   king/.style={pcD,dashed,thick},
   rowbox/.style={black,dashed,thick},
   pairbox/.style={orng,very thick},
@@ -156,8 +160,7 @@ to this work.
 \centering
 \input{figures/fig_hero.tex}
 \caption{A Hamiltonian path from $s$ to $t$ on a solid grid graph with $197$ points, found by the
-fast reference implementation of the algorithm of this paper, with its heuristic search turned
-off.
+algorithm of this paper.
 The path is coloured along its length, from blue at $s$ through purple and red to orange at $t$, so
 the order in which it visits the regions of the shape can be read off the colour.
 Both endpoints are inner, so the run goes through the two-hole case (\cref{sec:two}).
@@ -187,6 +190,7 @@ The cost function $\lean{decideHamPathCost}\ V\ s\ t$ is at most $5\,220\,000\,(
 \end{theorem}
 
 An edge set with these degrees and one component is exactly a Hamiltonian $s$--$t$ path.
+The proof assembles the four cases of \cref{tab:cases} and is given there.
 The Lean proof uses only the axioms \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}.
 
 \paragraph{Cost model.}
@@ -289,11 +293,14 @@ An endpoint may have no usable phantom, because it has no missing neighbour, or 
 endpoints are too close or opposed.
 Then the algorithm deletes the endpoint and branches over its neighbour $w$ on the path.
 $V$ has a Hamiltonian $s$--$t$ path exactly when $V\setminus\{t\}$ has one from $s$ to some neighbour
-$w$ of $t$, and the deleted $t$ becomes the phantom of $w$ (\cref{lem:del}).
+$w$ of $t$ (\cref{lem:del}), and the deleted $t$ becomes the phantom of $w$.
 Repeating this is a \emph{deletion walk} (\cref{sec:walk,sec:one}).
-It is bookkeeping for correctness.
-It takes at most $16$ starts and at most $13$ final tests per start, a constant, and when $s$ and
-$t$ are far apart it takes no steps at all (\cref{sec:bulk}).
+Each end of the branching is a \emph{leaf}, a smaller set with a phantom at each endpoint, and the
+algorithm runs a \emph{final test} there, Sheffield's loop with the class search of
+\cref{sec:classes} when there are holes.
+The walk is bookkeeping for correctness.
+It makes at most $208$ final tests in every case, a constant, and when $s$ and $t$ are far apart the
+walks stop right after the first deletions (\cref{sec:bulk}).
 
 \paragraph{Obstacle 2, an inner endpoint leaves a hole.}
 An endpoint whose eight king neighbours all lie in $V$ is \emph{inner}.
@@ -336,7 +343,8 @@ Each round is a phase and a reduction.
 A phase joins pieces by flipping a merging cell, and when none exists it builds \emph{bridges},
 flips that split a piece to expose a merging cell.
 The reduction then undoes or lowers the bridges, and the round ends with one piece fewer.
-If a phase is stuck, the certificate proves that no factor of the class has fewer pieces, and the
+If a phase is stuck, the certificate proves that no factor of the class has fewer pieces than the
+phase started with, and the
 class is rejected.
 The answer is yes exactly when some leaf and some class reach a single piece.
 The count behind a stuck phase uses chained rows (\cref{sec:repair}).
@@ -460,7 +468,8 @@ outside by king moves through missing points.}
 \begin{definition}[inner point]
 A point $p$ is \emph{inner} in $V$ when the four squares with corner $p$ are cells of $V$
 (Lean \lean{Inner}, decided by \lean{isInner}).
-Equivalently, all eight king neighbours of $p$ lie in $V$.
+An inner point lies in $V$, and a point of $V$ is inner exactly when all eight of its king
+neighbours lie in $V$.
 A point of $V$ that is not inner has a missing king neighbour (\lean{miss\_of\_not\_inner}).
 \end{definition}
 
@@ -576,6 +585,12 @@ Every arrow goes from a cell to a cell whose height is larger by $1$.}
 Around a point $v$, the four squares with corner $v$ are separated by the four edges at $v$.
 Going once around $v$, the arcs add up to $\pm(4-2\deg_H v)$, with the sign fixed by the colour of
 $v$.
+To see this, go counterclockwise around a black $v$.
+Facing outward along an edge at $v$, the walk crosses it from right to left.
+By the rule above a dark edge's arc crosses the same way and a light edge's the other way, so the
+four arcs add up to $\deg_H v-(4-\deg_H v)=2\deg_H v-4$.
+For a white $v$, facing outward walks from white to black, so both signs reverse and the sum is
+$4-2\deg_H v$.
 So the arcs balance at a point of degree $2$.
 
 \begin{lemma}[\lean{height\_exists}, \lean{Height.lean}]
@@ -583,6 +598,17 @@ So the arcs balance at a point of degree $2$.
 If $V$ is solid and every inner point has degree $2$ in $H$, then $H$ has a height on the cells
 of $V$.
 \end{lemma}
+
+\begin{proof}
+This is the argument of \cref{app:slit} without a vortex.
+The four edges at an inner point are sides between two cells, so the arcs balance there.
+At a point that is not inner the arcs need not balance, and the imbalance is moved along a path of
+edges that are not sides between two cells to a point far left of $V$, which exists because $V$ is
+solid.
+These corrections change no arc between two cells.
+Afterwards the weights balance at every point, so they are the jumps of a function $\tau$, which is
+a height.
+\end{proof}
 
 \begin{definition}[relative height $D$]
 \label{def:D}
@@ -625,6 +651,33 @@ Let $F,H$ be factors with the same degrees.
   square $c$ that is not a cell of $V$ (\lean{D\_eq\_zero\_of\_not\_cellW}).
 \end{enumerate}
 \end{lemma}
+
+\begin{proof}
+Part~1 holds because $D$ is a sum of weights $\pm2$.
+For part~2, put $\varepsilon_F(e)=+1$ when the arc of $F$ across a unit edge $e$ points from its
+lower or left square to its upper or right square, and $\varepsilon_F(e)=-1$ otherwise, and
+likewise $\varepsilon_H$.
+Toggling the membership of $e$ reverses its arc.
+So $\varepsilon_F(e)-\varepsilon_H(e)$ is the weight of $e$ in \cref{def:D} when $e\in F\oplus H$,
+and $0$ otherwise.
+Going once around a point $p$, $\varepsilon_F$ adds up to $\pm(4-2\deg_F p)$ and $\varepsilon_H$ to
+$\pm(4-2\deg_H p)$ with the same sign, and the two degrees are equal.
+So the weights add up to $0$ around every point.
+Every closed walk of squares is a sum of walks around single points, so the weights are the jumps
+of a function on squares, unique once it is $0$ far left of all edges.
+Reading this function along a horizontal walk from far left to $c$ crosses exactly the vertical
+edges of the row of $c$ at or left of the left side of $c$, so the function is $D(F,H)$.
+Hence $D(F,H)$ jumps across every side $e$ by the weight of $e$, which is $+2$ in the direction of
+the arc of $F$ when $e\in F\oplus H$, and $0$ otherwise.
+This proves part~2 and the statement before the lemma.
+
+For part~3, let $c$ not be a cell of $V$, and let $m$ be a missing corner of $c$.
+No edge of $F\oplus H$ meets $m$, so $D(F,H)$ is the same on the four squares at $m$.
+Two king-adjacent missing points share a square, so $D(F,H)$ is the same at the squares of all
+points of a king path of missing points.
+As $V$ is solid, such a path joins $m$ to a point left of $V$, whose squares have no edge of
+$F\oplus H$ at or left of them in their rows, so $D(F,H)=0$ there.
+\end{proof}
 
 The conclusion of part~3 is named \lean{SolidFor}~$V\ F\ H$.
 Large parts of the argument use only \lean{SolidFor}, and not solidity itself.
@@ -718,7 +771,12 @@ touches three pieces.
 The proof uses degree $2$ at the corners.
 In Lean the cut-cell shapes are in \lean{Shapes.lean} and \lean{E1.lean}.
 At a degree-one point near the cells the lemma has exceptions.
-One of them, called E1, touches three pieces (\cref{sec:phantom}).
+One of them is a cell with the \emph{E1 shape}.
+In some frame its back corners share a piece, each front corner is alone in its own piece, one front
+corner is an out-vertex (\cref{def:far}), and the square in front is not a cell (Lean
+\lean{TriShape}).
+A cell has the \emph{diagonal shape} when no side has both corners in one piece but two diagonal
+corners do (Lean \lean{DiagShape}).
 
 \begin{definition}[row, stuck]
 \label{def:row}
@@ -743,7 +801,8 @@ The last cell is a local maximum (or minimum) along the row.
 (a) A factor with three pieces.
 The cell $(1,4)$ is critical in the frame whose front is its bottom side.
 Its row (yellow) is $(1,4),(1,3),(1,2)$, of length $3$.
-The heights fall $2,1,0$ along it, so the arc across the front of each of its cells points up.
+The heights fall $2,1,0$ along it, so the arc across the front of each of its cells except the last
+points up.
 The arc across the front of $(1,2)$ points down, from height $0$ to height $1$, so the row ends at
 $(1,2)$.
 (b) The same shape without its two bottom points, and a factor with two pieces.
@@ -758,29 +817,31 @@ By the certificate (\cref{thm:cert}) this set has no Hamiltonian cycle.}
 \begin{definition}[bridge, fixed pair]
 \label{def:bridge}
 A \emph{bridge step} applies to a well formed row of even length $r\ge2$ from a critical cell $q$
-that is not a square of an earlier bridge (Lean \lean{RowStep}, \lean{Bridges.lean}).
+that is not a bridge square of an earlier bridge (Lean \lean{RowStep}, \lean{Bridges.lean}).
 It flips only the last cell $E=c_{r-1}$, and it requires that this flip splits a piece
 (\lean{RowStep.split}).
+The cells $c_0,\dots,c_{r-1}$ of the row are the \emph{bridge squares}.
 The two last cells $(A,E)=(c_{r-2},c_{r-1})$ form the \emph{fixed pair} of the bridge (Lean
-\lean{FixedPr}, \lean{Bridge.pairOf}).
+\lean{FixedPr}, \lean{Bridge.pairOf}), and they are its \emph{pair squares}.
 \end{definition}
 
 \begin{figure}[t]
 \centering
 \input{figures/fig_bridge.tex}
-\caption{An even row of length $r=4$ upward from a critical cell $f_0$ (dashed box), and the bridge
+\caption{An even row $c_0,\dots,c_3$ of length $r=4$ upward from a critical cell $c_0$, and the bridge
 made from it.
+The dashed box is the row.
 The window shows the edges forced by the bridge pattern (\lean{RegionOK}).
 Short stubs are edges that leave the window.
-Left: before the step, $f_0$ has a dark back (red piece below) and the strip pattern above it
+Left: before the step, $c_0$ has a dark back (red piece below) and the strip pattern above it
 (blue piece).
-The top cell $f_3$ has dark laterals and light back and front.
-Right: $f_3$ is flipped.
+The last cell $E=c_3$ has dark laterals and light back and front.
+Right: $E$ is flipped.
 Its back and front are now dark.
 The strand through its top corners has split off from the blue piece (green).
 Which of the two strands keeps the blue piece depends on edges outside the window, and the
 colouring shows one possibility.
-The orange box marks the fixed pair $(f_2,f_3)$.}
+The orange box marks the fixed pair $(c_2,c_3)$.}
 \label{fig:bridge}
 \end{figure}
 
@@ -801,8 +862,36 @@ It repeats the following test in a state $H$ with a list of bridges (Lean \lean{
   outcome \emph{twist}.
 \end{enumerate}
 Each bridge step adds one piece, so a state reached after $k$ steps has $m+k$ pieces
-(\lean{reach\_count}, \lean{PhaseCount.lean}).
+(\lean{reach\_count}, \lean{PhaseCount.lean}, \cref{app:step}).
 The case split is exhaustive (\lean{phase\_spec}).
+\Cref{fig:phase} shows each outcome on a small factor, and \cref{app:runs} follows two complete
+runs with their heights.
+
+\begin{figure}[!htbp]
+\centering
+\input{figures/fig_phase.tex}
+\caption{The outcomes of one phase step, with a height in every cell.
+The arrow in a row points in its direction.
+(a) Merge.
+The yellow cell is a merging cell, alternating with its corners in two pieces, and the first in
+the scan order.
+(b) Stuck.
+There is no merging cell, and the row of the only critical cell falls $3,2,1,0$ into a square that
+is not a cell (red cross) before its heights turn.
+(c) Odd.
+There is no merging cell, and the row of the critical cell has odd length $3$.
+Lowering it joins the two pieces.
+(d), (e) Bridge step.
+The row has even length $2$, and flipping its last cell $E$ splits the blue piece in two.
+The phase records the bridge and continues.
+(f), (g) Twist.
+A path factor of a leaf with an inner endpoint, whose phantom lies in the hole (grey cells, slit
+heights, slit dashed red).
+The row has even length $2$, and flipping its last cell $E$ splits nothing, because the strand
+through $E$ belongs to the path piece.
+The phase ends and lowers the whole row, which joins the two pieces.}
+\label{fig:phase}
+\end{figure}
 
 \subsection{Success branches and the undoing of bridges}
 \label{sec:undo}
@@ -811,34 +900,92 @@ The outcomes merge, odd and twist each give a \emph{half bridge}.
 The half bridge is a flip of a merging cell, the lowering of an odd row, or the lowering of an
 even row.
 Lowering a row flips its cells from the last down to the first.
+We follow Sheffield in calling this lowering.
+Along a rising row it lowers every height of the row by $2$, and along a falling row it raises every
+height by $2$, by symmetry.
 Each of these operations joins one pair of pieces.
 The bridges are then processed in reverse order of creation.
-Bridge $i$ is \emph{lowered} (its row without $E_i$ is flipped) when the pending pair of points is
-connected in the state before bridge $i$.
+The \emph{pending pair} is first the pair of points whose pieces the half bridge joins.
+Bridge $i$ is \emph{lowered} (its row without $E_i$ is flipped) when the pending pair is connected
+in the state before bridge $i$, and its start pair $(b_1,f_1)$ of $q_i$ becomes the pending pair.
 Otherwise it is \emph{undone} ($E_i$ is flipped back).
 This rule is computable (Lean \lean{plan}, \lean{planB}).
 It reproduces Sheffield's path in his boundary tree without building the tree.
 
-\begin{theorem}[Theorem~I.8, \lean{undo\_count}, \lean{UndoCount.lean}]
+\begin{theorem}[undoing the bridges, \lean{undo\_count}, \lean{UndoCount.lean}]
 \label{thm:undo}
 If the operations of the plan are compatible, then applying the half bridge and the plan to the
 final state of the phase gives a bridge-free factor with $m-1$ pieces.
 \end{theorem}
 
 \emph{Compatible} (\lean{OpsOK}) means two things.
-The cell sets of different operations are disjoint.
+Each operation is an intact odd strip of cells, its end pair lies in a fixed set $P$ of points, and
+no point of $P$ is an interior point of the strip.
 No edge toggled by an earlier operation is a side of a cell of a later one.
 This is Sheffield's Lemma~4.
-It is proved in Lean as Theorem~II for every operation pair (\lean{opsOK\_rows},
+
+\begin{proof}[Proof sketch]
+The half bridge joins the pieces of a pending pair $(u,v)$ (\lean{join\_apply}).
+The proof is an induction over the bridges, newest first, with this invariant.
+The current factor $G$ has one piece fewer than the state $H$ with the remaining bridges, the
+connections of $G$ on $P$ are those of $H$ with $u$ and $v$ joined, and $u,v$ are apart in $H$.
+Going back over a bridge $b$ removes one piece from $H$ (\lean{step\_count}).
+If $u$ and $v$ are joined in the state before $b$, the plan lowers the row of $b$ without $E$.
+That is an odd strip whose start pair is apart in $G$, because the critical cell $b.q$ has its back
+and front corners in different pieces.
+If $u$ and $v$ are not joined there, the plan flips $E$ back, and the back and front corners of $E$
+are apart in $G$, because the bridge step split them (\lean{RowStep.split}).
+In both cases, flipping an intact odd strip whose end pair is apart removes one piece and joins
+that pair (\lean{strip\_odd\_pf}), so the invariant holds for the earlier state, with the start pair
+of $b$ as the new pending pair after a lowering (\lean{merge\_eq\_prev}).
+Compatibility keeps the later strips intact (\lean{OpsOK.tail}).
+With no bridges left the gap of one piece gives $m-1$ pieces.
+\end{proof}
+
+Compatibility is proved in Lean for every operation pair (\lean{opsOK\_rows},
 \lean{opsOK\_merge}).
+The regions of the bridges keep their edge pattern through later steps (\lean{regionOK\_step}), and
+the square flipped by one bridge lies outside the region of every other.
+From these, the half bridge toggles no side of a square of the plan (\lean{c2\_chain},
+\lean{c2\_merge}), its cells avoid the bridge squares (\lean{c1\_half}, \lean{c1\_merge}), the
+squares of different operations are disjoint (\lean{c1\_newer}), and an earlier operation toggles no
+side of a later one (\lean{c2\_plan}).
+Each of these is a case analysis on which side of which square a toggled edge lies, with the cases
+named \lean{caseA1}, \lean{caseA2}, \lean{caseB2}, \lean{caseB3} and \lean{caseB4} in Lean.
+Only \lean{caseA2}, an out-vertex at the front of a bridge end, uses Far.
 One configuration of the merge branch, two bridge ends crossed at one merging cell, is not
 excluded.
 It is avoided by a choice rule.
-A merging cell $X$ is \emph{good} when no bridge $i$ ends at $X$ (the square beyond $E_i$ is $X$)
-while $i$ is not on the chain of lowered bridges.
+A merging cell $X$ is \emph{good} when no bridge $i$ that the plan started from $X$ undoes ends at
+$X$, that is, has $X$ as the square beyond $E_i$.
 \begin{theorem}[Theorem~R, \lean{theoremR}, \lean{S4TheoremR.lean}]
+\label{thm:R}
+Let the phase start from a factor whose out-vertices $t_0,u_0$ are Far and carry no opposed
+phantoms (\lean{NoOpp}, \cref{def:far,def:opp}).
 In the merge outcome a good merging cell exists.
 \end{theorem}
+
+\begin{proof}[Proof sketch]
+Suppose every merging cell is bad, and let $X$ be bad through an undone bridge $i$, so $X$ is the
+square beyond $E_i$.
+In the frame of $E_i$, $X$ has dark back and front and light laterals (\lean{beyond\_facts}).
+Each square beside $E_i$ across a lateral is a cell, or a corner of $E_i$ on that side is an
+out-vertex whose phantom lies across that lateral (\lean{side\_or\_t}).
+A side square that is a cell is a merging cell (\lean{l22}), so it is bad through some undone bridge
+$k$.
+Then the two bridges are crossed.
+The front of $E_k$ faces opposite to the front of $E_i$, $E_k$ is the square beside $X$, and $k$ is
+determined by $X$ alone, as the bridge Lean calls the node of $X$ (\lean{l23}).
+If both side squares are cells, both give this same $k$, and $E_k$ would be two different
+squares.
+If one is a cell and the other holds an out-vertex, the square beside $E_k$ on its far side is a
+cell, since otherwise a second out-vertex would carry a phantom opposed to the first, which
+\lean{NoOpp} excludes (\lean{t\_farA2}, \lean{t\_farB2}).
+That cell is merging and bad through some $k'$, and the node facts force $k'=i$ and a geometric
+contradiction (\lean{r\_core}, \lean{node\_beside}).
+If both sides hold out-vertices, two out-vertices are corners of one cell, which contradicts Far
+(\lean{two\_sides}).
+\end{proof}
 The algorithm takes the first cell passing the computable test \lean{goodB}.
 It is computed as \lean{isGoodMergingCell}, which builds the connections of each intermediate state
 once (\lean{isGoodMergingCell\_eq}).
@@ -847,14 +994,16 @@ once (\lean{isGoodMergingCell\_eq}).
 
 \begin{definition}[certificate, \lean{Cert}, \lean{Cert.lean}]
 \label{def:cert}
-Let $H$ be a factor, $\mathrm{FP}$ a list of fixed pairs, and $t_0,u_0$ points (the out-vertices of
-\cref{sec:phantom}).
+Let $H$ be a factor, $\mathrm{FP}$ a list of fixed pairs, and $t_0,u_0$ points (the out-vertices,
+\cref{def:far}).
 $\lean{Cert}\ V\ H\ \mathrm{FP}\ t_0\ u_0$ is the conjunction of the following local conditions.
 \begin{enumerate}[label=(\arabic*)]
-\item Every merging cell is a square of a pair in $\mathrm{FP}$ (\lean{f2}).
+\item Every merging cell is a pair square of a pair in $\mathrm{FP}$ (\lean{f2}).
 \item Every pair satisfies \lean{PairOK}.
+  A pair has a top square and a bottom square (Lean \lean{top}, \lean{bot}).
   The light sides of the top square have arcs pointing in, those of the bottom square point out,
-  the arc from bottom to top points up, and the corner pieces are recorded.
+  the arc across their shared side points from the bottom square to the top square, and the pieces
+  at the corners of both squares are recorded.
 \item Every cell touching three or more pieces has the E1 shape at $t_0$ or $u_0$ or the diagonal
   shape (\lean{TriOK}).
 \item Every edge with one end outside $V$ has its other end at $t_0$ or $u_0$ (\lean{out}).
@@ -880,6 +1029,16 @@ If $\lean{Cert}\ V\ H\ \mathrm{FP}\ t_0\ u_0$ holds, then
 $\ncomp(W,H)\le\ncomp(W,H')+|\mathrm{FP}|$.
 \end{theorem}
 
+\begin{proof}
+\lean{Cert} implies the invariant \lean{Inv} for the competitor $H'$ (\lean{cert\_inv}), and
+\cref{thm:minimal} gives the bound.
+The only difference between the two is in fields (7) and (8).
+\lean{Cert} allows a chained row to leave $V$ with all its arcs pointing one way, and \lean{Inv}
+requires it to end at a pair square.
+A chained row that leaves $V$ cannot carry $D(H,H')$ of its direction's sign, because $D$ does not
+move back toward $0$ along arcs and is $0$ off the cells (\lean{not\_colOut}).
+\end{proof}
+
 \begin{theorem}[\lean{cert\_of\_stuck}, \lean{TriProof.lean}]
 \label{thm:stuckcert}
 Let the phase start from a factor whose edges leaving $V$ all end at $t_0$ or $u_0$, and let
@@ -888,9 +1047,28 @@ If the phase ends with outcome stuck in state $H$ with bridge list $\mathrm{BS}$
 $\lean{Cert}\ V\ H\ (\mathrm{BS}.\mathrm{map}\ \lean{pairOf})\ t_0\ u_0$ holds.
 \end{theorem}
 
-A stuck state has $m+r$ pieces with $r=|\mathrm{BS}|$.
-If a Hamiltonian path exists, \cref{thm:cert} with $H'$ the path gives $m+r\le 1+r$.
-So $m\le1$, and a phase from $m\ge2$ pieces never ends stuck.
+\begin{proof}[Proof sketch]
+Along the bridge steps of the phase an invariant holds (\lean{pinv\_reach}).
+The state is a factor, its edges leaving $V$ end at $t_0$ or $u_0$, the region of every bridge keeps
+its edge pattern (\lean{regionOK\_new}, \lean{regionOK\_step}), the pair squares of different bridges
+are distinct, and the square flipped by one bridge lies outside the region of every other.
+At the stuck state, every merging cell is a pair square by the stopping rule.
+The fields of \lean{Cert} follow (\lean{cert\_of\_phase}).
+Field~(1) is the stopping rule.
+Fields~(2) and~(6) come from the frozen regions of the bridges (\lean{pair\_facts}).
+Field~(4) is part of the invariant.
+Fields~(3) and~(5) come from degree~$2$ at the corners.
+A cell that violates them forces a square across one of its sides to be a non-cell with an
+out-vertex at a corner of the cell (\lean{across\_noncell}), and a violation on two sides would put
+two different out-vertices at corners of one cell, which contradicts Far (\lean{tri\_of},
+\lean{l4\_of}).
+Fields~(7) and~(8) come from the rule that no critical cell is left unstuck, through the chaining
+lemma below (\lean{col\_of\_stuck}, \lean{side\_of\_stuck}).
+\end{proof}
+
+A stuck state has $m+\ell$ pieces with $\ell=|\mathrm{BS}|$.
+If a Hamiltonian path exists, \cref{thm:cert} with $H'$ the path gives $m+\ell\le 1+\ell$.
+So $m\le1$, and when a Hamiltonian path exists a phase from $m\ge2$ pieces never ends stuck.
 The ``no'' answer is therefore certified by a local check.
 It does not depend on the phase rules.
 The phase rules are needed only for completeness, that is, for showing that a phase ends in a
@@ -900,15 +1078,15 @@ merge or in a certified state.
 \label{sec:repair}
 
 The count behind \cref{thm:cert} compares a stuck state $H$ with a competitor $H'$.
-Fixed pairs are moved along rows toward $H'$, and the cut components on which $D(H,H')$ is not
-constant are then counted.
+Generalized moves along chained rows bring $H$ toward $H'$ without changing the number of pieces or
+of fixed pairs, and the joins between pieces that remain are then counted.
 In Sheffield's \S4.5, as in \cref{def:row}, a row stops where its front arc turns, and a critical
 cell is stuck when its row first reaches a square that is not a cell or is a cut cell.
 Rows run in all four directions.
 His move in \S4.8 lowers rows that end at a fixed pair.
-A stuck row can instead end at a cut cell $g$ of another cut that is higher than the cell before it.
-Then $g$ is critical and its row continues in the same direction, possibly through further cut
-cells, until it reaches a fixed pair.
+A stuck row can instead end at a cut cell $g$.
+Then the run continues straight through $g$, possibly through further cut cells, until it reaches
+a fixed pair or leaves $V$ (\cref{lem:chain}).
 The whole straight run is a \emph{chained row}.
 It differs from a row not in direction but in passing through cut cells.
 Lowering it reroutes strands at those cut cells without joining pieces there, and
@@ -918,46 +1096,109 @@ Lowering it reroutes strands at those cut cells without joining pieces there, an
 A \emph{strip} of length $n$ from $c$ is a straight run $c_0,\dots,c_{n-1}$ with dark back of $c_0$,
 laterals of $c_j$ dark exactly for odd $j$, and the front of $c_j$ dark exactly for odd $j$, except
 that the last front is dark exactly when $n$ is odd (Lean \lean{StripPat}).
-A \emph{chained row} is a strip through critical cells and plain strip cells, ending at a fixed-pair
-square (Lean \lean{ColEnds}, where the Lean files call it a column).
+A \emph{chained row} from a critical cell $c$ is a strip $c_0=c,\dots,c_n$ that ends in one of two
+ways.
+Either its last cell $c_n$ and the square $c_{n+1}$ beyond it form a fixed pair (Lean
+\lean{ColEnds}), or it leaves $V$ with all its arcs pointing one way (Lean \lean{ColOut}).
+Its length is $n+1$, the length of the strip, and the Lean files call it a column.
 \end{definition}
 
-\begin{lemma}[chaining lemma, \lean{ColProof.lean}]
-Let $f$ be critical, and let its row run into a cut cell $g$ that is higher than the cell before it.
-Then $g$ is critical, extremal along its cut, and its row continues in the same direction.
+\begin{lemma}[chaining lemma, \lean{col\_of\_stuck}, \lean{lemmaC}, \lean{ColProof.lean}]
+\label{lem:chain}
+Let $q$ be critical with dark back, and let its row be stuck at a cut cell $g=c_k$.
+Then $k$ is even, $g$ has a dark back and light laterals, and one of the following holds.
+\begin{enumerate}
+\item The front of $g$ is dark, and $g$ is a pair square with its partner in front.
+\item The front of $g$ is light, its front corners are joined, and $g$ is critical in the same
+  frame and direction, so the run continues with the row of $g$.
+\item The front of $g$ is light, its front corners are apart, and the square in front of $g$ is not
+  a cell of $V$.
+\end{enumerate}
 \end{lemma}
+
+\begin{proof}[Proof sketch]
+Along the row the arcs all point the same way, so its cells have the strip pattern, with laterals
+and front of $c_j$ dark exactly for odd $j$ (\lean{run\_pat}).
+If $k$ were odd, the front of $c_{k-1}$ and its laterals would be light, degree~$2$ would darken the
+laterals of $g$, and $g$ would not be cut (\lean{uncut\_of}).
+So $k$ is even, the shared side is dark, and degree~$2$ makes the laterals of $g$ light
+(\lean{forcedA'}, \lean{forcedB'}).
+If the front of $g$ is dark, $g$ is alternating and cut, so it is a merging cell and, at a stuck
+state, a pair square.
+If the front is light and its corners are joined, $g$ is critical with the same front arc
+(\lean{arc\_opp\_diff}), and the argument repeats along the row of $g$ (\lean{lemmaC}).
+If the front corners are apart, a merging-cell argument shows that the square in front is not a
+cell.
+The strips glue into one strip (\lean{stripPat\_append}).
+\end{proof}
 
 \begin{lemma}[strand pairing, \lean{lowerCol\_count}, \lean{Column.lean}]
 \label{lem:strand}
 Lowering a chained row toggles all its laterals and its two end sides.
-It keeps the pairing of the strands that enter and leave it at odd heights.
-Only the two ends of the chained row change pieces.
+It keeps the pairing of the strands that leave it sideways at the odd positions $j$ along it.
+Only the strands at its two ends can change partners.
 So a chained row changes the number of pieces exactly as one row of the same length.
 \end{lemma}
 
+The proof of \cref{lem:strand} is in \cref{app:strand}.
+
 The proof uses chained rows in place of rows in the move.
-A \emph{generalized move} at a critical cell $c$ with $D$ of its direction's sign lowers the chained row
-from $c_1$ to its top and makes $(c_0,c_1)$ the new fixed pair.
+Say that $D(H,H')$ has \emph{sign} $o$ at a cell when it is positive for $o=\lean{true}$ and negative
+for $o=\lean{false}$ (Lean \lean{sgnD}), and write $o$ for the front arc of a critical cell, true when
+it points out.
+A \emph{generalized move} at a critical cell $c$ with $D$ of sign $o$ lowers the chained row from
+$c_1$ to its last cell and makes $(c_0,c_1)$ the new fixed pair.
 It keeps the number of pieces (\cref{lem:strand}), keeps the invariant \lean{Inv}
 (\lean{MoveInv.lean}, \lean{ColAfter.lean}, \lean{SideAfter.lean}, \lean{E1After.lean}), and lowers
-$\mu=\sum_c|D(H,H')(c)|$ by $2(L-1)$ for a chained row of length $L$.
-After all moves, every cut component on which $D\ne0$ contains a fixed-pair square of the right
-sign.
-The count then uses a rank bound that sees only these joins (\lean{ncomp\_le\_of\_joins},
-\lean{Rank.lean}).
+$\mu=\sum_c|D(H,H')(c)|$ by $2$ for each flipped cell.
 The square beyond a pair created by a move need not be a cut cell, and the invariant has a field
 \lean{side} for it.
 The E1 square is handled by a shape invariant instead of a count.
 
 \begin{theorem}[\lean{stuck\_minimal}, \lean{Minimal.lean}]
+\label{thm:minimal}
 If $\lean{Inv}\ V\ H\ H'\ \mathrm{FP}\ t_0\ u_0$ holds, then
 $\ncomp(W,H)\le\ncomp(W,H')+|\mathrm{FP}|$.
 \end{theorem}
 
+\begin{proof}[Proof sketch]
 The proof is an induction on $\mu$.
-\lean{Cert} implies \lean{Inv} for every competitor (\lean{cert\_inv}).
-A chained row that leaves $V$ cannot carry $D$ of its direction's sign, because $D$ grows along arcs and
-vanishes off the cells (\lean{not\_colOut}).
+
+\emph{A move exists.}
+Suppose some cell $c$ with joined back corners, joined front corners and different back and front
+pieces is not alternating and has $D(H,H')$ of sign $o$.
+By field~(5) and degree~$2$, $c$ is critical in a frame with dark back and front arc $o$
+(\lean{crit\_of\_twotwo}), and it is not a pair square (\lean{not\_pair\_of\_crit}).
+Field~(7) gives a chained row $c_0=c,\dots,c_n$ whose last cell and the square $c_{n+1}$ beyond it
+form a pair $i$, with $n$ even and $n\ge2$ (\lean{movable\_column}).
+The move flips $c_n,\dots,c_1$ and replaces the pair $i$ by the pair $(c_0,c_1)$, so the number of
+pairs is unchanged (\lean{fpAfter\_length}).
+The flips keep the factor, its number of pieces and its connections away from the inner corners of
+the chained row (\lean{lowerCol\_factor}).
+They keep \lean{Inv}, with \lean{col\_after} for field~(7), \lean{sideInv\_after} for field~(8),
+\lean{three\_after} for field~(3) and \lean{MoveCtx.out\_after} for field~(4) (\lean{MoveCtx.inv\_after}).
+Each flipped cell is a local extremum with $D$ of the right sign, so $\mu$ drops by $2n\ge4$
+(\lean{lowerCol\_mu}, \lean{MoveCtx.mu\_lt}), and the induction hypothesis applies.
+
+\emph{No move exists.}
+Call a cell $c$ \emph{extremal} along the cut between two pieces $Q_1\ne Q_2$ of $H$ in direction
+$o$ when no side of $c$ with one end in $Q_1$ and the other in $Q_2$ has its arc pointing in
+direction $o$.
+Say that a pair \emph{pays} for the cut $Q_1|Q_2$ when the corner pieces recorded in field~(2) are
+$Q_1$ and $Q_2$ and $D(H,H')$ has the matching sign at its square.
+Then every cell $c$ that is extremal along a cut $Q_1|Q_2$, with $D(H,H')(c)\neq0$ of the matching
+sign, is a square of a pair that pays for $Q_1|Q_2$, or it is the E1 square and the cut is paid
+through a third piece $Q_3$ (\lean{finalOK\_of}, \lean{threeOK\_of\_tri}).
+Let $P$ be the paying pairs, so $|P|\le|\mathrm{FP}|$.
+Take an edge $e$ of $H'$ that joins two pieces of $H$.
+Beside $e$ lies a square with $D\neq0$ (\lean{disagree\_beside}), which is a cell by
+\lean{SolidFor}.
+A climb from it along the cut never decreases $|D|$ and ends, because no climb closes, at an
+extremal cell (\lean{climb}).
+The paying pair there joins the two ends of $e$ in the pieces of $H$ merged along $P$.
+So every edge of $H'$ that joins pieces of $H$ is accounted for by $P$, and the rank bound
+(\lean{ncomp\_le\_of\_joins}, \lean{final\_count}) gives $\ncomp(W,H)\le\ncomp(W,H')+|P|$.
+\end{proof}
 
 \subsection{Climbs}
 
@@ -965,7 +1206,7 @@ vanishes off the cells (\lean{not\_colOut}).
 \label{def:climb}
 A \emph{climb step} in direction $o$ goes from a cell $c$ to a neighbouring cell $c'$ across a
 side whose arc points from $c$ to $c'$ (for $o=\lean{true}$) or from $c'$ to $c$ (for
-$o=\lean{false}$), and which joins two given pieces (Lean \lean{ClimbStep}).
+$o=\lean{false}$), and whose two ends lie in two given pieces $x\ne y$ (Lean \lean{ClimbStep}).
 \lean{ClimbAcyc} says that no sequence of climb steps returns to its start.
 \lean{ArcAcyc} is the same condition without the piece restriction (\lean{SlitHeight.lean}).
 \end{definition}
@@ -991,15 +1232,16 @@ The algorithms use a fast version of the two-phantom loop, \lean{twoPhantomLoop}
   component once, in $O(|W|^2)$ steps (\lean{connectedPairsCost\_le}, \lean{isConnected\_eq},
   \lean{ConnSet.lean}).
 \item The phase \lean{runPhase} computes the connection set once per step, together with the set of
-  bridge cells, so each step costs $O(N^2)$.
+  bridge cells, so each step costs $O(|W|^2)$.
   It equals \lean{phase} on the states the phase reaches (\lean{runPhase\_eq}, \lean{PhaseS.lean}).
 \item The reduction \lean{reducePieces} computes the connection sets of the bridge states once, and
-  the plan of each candidate merging cell once, in $O(N^3)$ steps (\lean{reducePieces\_eq},
+  the plan of each candidate merging cell once, in $O(|W|^3)$ steps (\lean{reducePieces\_eq},
   \lean{ReduceS.lean}).
-\item \lean{twoPhantomLoop} equals \lean{runSC2} (\lean{twoPhantomLoop\_eq}) and costs at most
-  $(n+1)\cdot 3000\,(|V|+3)^3$ for fuel $n$ (\lean{twoPhantomLoopCost\_le}, \lean{LoopF.lean}).
+\item The fast loop \lean{twoPhantomLoop} equals \lean{runSC2}, the loop \lean{runSC} for
+  two-phantom factors (\lean{twoPhantomLoop\_eq}).
+  With fuel $n$ it costs at most $(n+1)\cdot 3000\,(|V|+3)^3$ (\lean{twoPhantomLoopCost\_le},
+  \lean{LoopF.lean}).
 \end{itemize}
-Here $N=|W|+1$.
 
 % =====================================================================
 \section{Phantom endpoints and the two-phantom core}
@@ -1020,8 +1262,6 @@ In a phantom factor $t$ has degree $2$ and the endpoint is $p\notin V$.
 Phantom factors correspond one to one to path factors of $V$ (\lean{notch\_up},
 \lean{notch\_down}), with the same pieces.
 Only cells of $V$ are flipped, so $p$ is never the corner of a flipped cell.
-A point is \emph{dangling} when it is the corner of no cell.
-If the other endpoint $s$ is dangling, every corner of a cell of $V$ has degree $2$.
 
 \begin{definition}[two phantoms]
 Let $t$ and $s$ have missing lattice neighbours $p\ne q$.
@@ -1054,10 +1294,10 @@ $t$ and $q$ of $s$ are not opposed (\lean{TwoPh.lean}).
 
 Several sites of the certificate argument concern the out-vertex (\lean{l4\_of}, \lean{tri\_of},
 \lean{a2p}, \lean{side\_or\_t}, \lean{t\_farA}, and others).
-With two out-vertices almost every site closes under Far, because two different corners of one cell lie within king
+With two out-vertices every site but two closes under Far, because two different corners of one cell lie within king
 distance $1$ (\lean{two\_sides}, \lean{corners\_close}).
-Two sites need more, \lean{t\_farA2} and \lean{t\_farB2} in the proof of Theorem~R (its Lemma~2.3,
-the crossed configuration).
+Two sites need more, \lean{t\_farA2} and \lean{t\_farB2} in the proof of Theorem~R (the crossed
+configuration in the proof of \cref{thm:R}).
 There one out-vertex sits at a corner of the bridge end $E$ and the other at a corner of a cell two
 steps away, at king distance $2$ in the worst case.
 Both sites close by \lean{NoOpp}, using the phantom positions returned by \lean{side\_or\_t}.
@@ -1073,6 +1313,38 @@ Its fast version \lean{twoPhantomTest} returns the same answer (\lean{twoPhantom
 $5000(|V|+3)^4$ steps (\lean{twoPhantomTestCost\_le}, \lean{LoopF.lean}).
 \end{theorem}
 
+\begin{proof}
+Applied at both endpoints, the correspondence of phantom factors with path factors
+(\lean{notch\_up}, \lean{notch\_down}) shows that $V$ has a Hamiltonian $s$--$t$ path exactly when
+some two-phantom factor on $W=V\cup\{p,q\}$ has one piece.
+If \lean{findFactor} finds no path factor, none exists (\lean{findFactor\_none}) and the answer
+\lean{false} is correct.
+Otherwise the loop runs on two-phantom factors, and the hypotheses of \cref{sec:sheffield} hold for
+any two of them, $H$ and $H'$.
+Every corner of a cell of $V$ has degree $2$, because the degree-one points $p$ and $q$ are outside
+$V$.
+$H\oplus H'$ consists of edges of $V$, because both contain $t$--$p$ and $s$--$q$ and no other edge
+at $p$ or $q$, so \cref{lem:D} gives $\lean{SolidFor}\ V\ H\ H'$.
+Every two-phantom factor has a height by \cref{lem:height}, and a height rises along every climb,
+so no climb closes (\lean{acyc\_of\_height}).
+The out-vertices $t$ and $s$ are Far with phantoms that are not opposed (\lean{two\_noOpp}).
+Suppose a phase starts with $m$ pieces.
+If it ends stuck after $\ell$ bridge steps, its state has $m+\ell$ pieces and satisfies the
+certificate with $\ell$ fixed pairs (\cref{thm:stuckcert}), so every two-phantom factor has at least $m$ pieces
+(\cref{thm:cert}).
+A phase is only run while $m\ge2$, so then no Hamiltonian path exists and \lean{false} is correct.
+Otherwise the phase ends with a merge, an odd row or a twist.
+\Cref{thm:R} supplies a good merging cell in the merge case, and \cref{thm:undo} turns the outcome
+into a bridge-free factor with $m-1$ pieces.
+A phase cannot run out of fuel, since each bridge step adds a piece and there are at most $|W|$
+pieces.
+So each round removes one piece, and the $|V|+2$ rounds of fuel reach one piece, where the answer
+\lean{true} is correct.
+The fast loop computes the same rounds (\lean{twoPhantomLoop\_eq}).
+Each round costs at most $3000(|V|+3)^3$, and with $|V|+2$ rounds and \lean{findFactor} the total is
+within $5000(|V|+3)^4$.
+\end{proof}
+
 % =====================================================================
 \section{Deletion walks}
 \label{sec:walk}
@@ -1084,6 +1356,15 @@ Then $V$ has a Hamiltonian $s$--$t$ path if and only if, for some lattice neighb
 $t$ in $V$, the set $V\setminus\{t\}$ has a Hamiltonian $s$--$w$ path.
 \end{lemma}
 
+\begin{proof}
+Let $H$ be a Hamiltonian $s$--$t$ path of $V$.
+The point $t$ has degree $1$, so exactly one edge $w$--$t$ of $H$ meets $t$.
+Since $|V|\ge3$, the path is not the single edge $s$--$t$, so $w\ne s$.
+Removing this edge gives a Hamiltonian $s$--$w$ path of $V\setminus\{t\}$.
+Conversely, adding the edge $w$--$t$ to a Hamiltonian $s$--$w$ path of $V\setminus\{t\}$ gives a
+Hamiltonian $s$--$t$ path of $V$.
+\end{proof}
+
 The deleted point $t$ is a missing lattice neighbour of $w$, so it can serve as the phantom of $w$.
 If $t$ has a missing king neighbour, $V\setminus\{t\}$ is solid (\lean{solid\_erase}).
 
@@ -1092,7 +1373,7 @@ The walk \lean{boundaryEndpointsWalk} keeps $s$ with its phantom fixed and moves
 In state $(V,t)$ it does the following.
 A \emph{usable phantom} of $t$ is a missing lattice neighbour of $t$ that differs from the phantom
 $q$ of $s$ and is not opposed to $q$ (Lean \lean{isUsablePhantom}).
-If $t$ has a usable phantom and $t,s$ are Far, the walk runs \lean{twoPhantomTest} with that phantom.
+If $t$ has a usable phantom and $t,s$ are Far, the walk runs \lean{twoPhantomTest} with the first usable phantom.
 Otherwise it deletes $t$ and branches over the lattice neighbours $w\ne s$ of $t$ in $V$.
 The measure \lean{wmu} is the number of points of $V\setminus\{s\}$ within king distance $1$ of $s$
 (at most $8$), plus $2$ if $t$ has no missing lattice neighbour, plus $1$ if $t$ has no usable
@@ -1100,15 +1381,33 @@ phantom.
 It is at most $11$, and each deletion lowers it.
 So the walk has at most $11$ deletion levels with at most $4$ branches each, and its fuel is $12$
 (\cref{fig:walk}, left).
+The number of final tests is far smaller than $4^{11}$, at most $52$ (\cref{par:ring}).
 
 \paragraph{Two boundary endpoints.}
 \lean{boundaryEndpoints} handles $s$ and $t$ that each have a missing king neighbour.
 If $s$ has a missing lattice neighbour, that is its phantom.
 Otherwise $s$ is deleted once first (\cref{lem:del} read with the roles of $s$ and $t$ exchanged).
 \begin{theorem}[\lean{boundaryEndpoints\_main}]
+\label{thm:bdry}
 For solid $V$ and $s\ne t$ in $V$ each with a missing king neighbour, \lean{boundaryEndpoints} decides the
 problem within $1\,060\,000\,(|V|+3)^4$ steps.
 \end{theorem}
+
+\begin{proof}
+If $s$ has no missing lattice neighbour, \lean{boundaryEndpoints} deletes $s$ once and branches over
+its neighbours, which is correct by \cref{lem:del} with $s$ and $t$ exchanged, and the deleted $s$
+becomes the phantom of the new endpoint.
+Each deletion of the walk is correct by \cref{lem:del}.
+Every deleted point has a missing king neighbour, the point deleted before it or a missing point
+of $V$, so the set stays solid (\lean{solid\_erase}).
+The measure \lean{wmu} drops with every deletion and is at most $11$, so within the fuel $12$ every
+branch reaches a state in which $t$ has a usable phantom and $t,s$ are Far, or at most two points
+remain, where the answer is read off directly (\lean{boundaryEndpointsWalk\_correct}).
+In the first case \cref{thm:twoph} applies, because a usable phantom is not opposed to the phantom
+of $s$.
+For the cost, there are at most $4$ walks of at most $52$ final tests each (\cref{par:ring}), each
+within $5000(|V|+3)^4$ steps, plus the walks' own work.
+\end{proof}
 
 \begin{figure}[t]
 \centering
@@ -1140,14 +1439,14 @@ Put $V'=V\setminus\{t\}$.
 The point $t$ is a \emph{hole} of $V'$, because all eight of its king neighbours lie in $V'$.
 The four squares with corner $t$ are the \emph{hole cells}.
 They are cells of $V$ but not of $V'$, so they are never flipped.
-The point $t$ is the phantom of $w$, and it lies inside the hole.
+The point $t$ is the phantom of $w$.
 \end{definition}
 
 Two facts that solidity gave now fail.
 There is no height (this section), and factors need not be connected by flips (\cref{sec:classes}).
 
 \begin{definition}[vortex]
-A \emph{vortex} of $H$ is an inner point of degree $1$.
+A \emph{vortex} of $H$ is a point of degree $1$ that is inner in the original solid set.
 \end{definition}
 
 At a vortex the four arcs do not balance.
@@ -1177,6 +1476,7 @@ $+1$ if the arc of $H$ across $e$ points from $c^-$ to $c^+$ and $-1$ otherwise.
 
 The proof routes the imbalance $\delta$ as a unit flow from the vortex straight left past all of
 $V$, and subtracts it (\cref{app:slit}).
+\Cref{fig:twistrun} in \cref{app:runs} shows slit heights during a run.
 
 \begin{definition}[quadrant label]
 For a vortex $(a,b)$ and a square $c=(x,y)$, $\lab(c)$ is $0$ if $y<b$ and $x<a$, $1$ if $y<b$ and
@@ -1198,7 +1498,7 @@ The open circle is the deleted inner endpoint $t$, a vortex of the factor.
 Each cell shows its slit height $\tau$ (bold, shifted so the least value is $0$) and its quadrant
 label (small, purple).
 The slit is the single side left of $t$ on its row.
-The function $2\tau+\lab$ rises along every arc (\cref{sec:inside}).}
+Here $\delta=-2$, and the function $2\tau+\lab$ rises along every arc (\cref{sec:inside}).}
 \label{fig:vortex}
 \end{figure}
 
@@ -1212,8 +1512,8 @@ In particular \lean{ClimbAcyc}~$V\ H$ holds (\lean{acyc\_vortex}).
 \begin{proof}
 Fix the direction $o$ and put $g=1$ for $o=\lean{true}$ and $g=-1$ otherwise.
 Take $\tau,\delta$ from \cref{thm:slit}.
-Put $\mu=-1$ if $g\delta=2$ and $\mu=1$ if $g\delta=-2$, and
-\[\Phi(c)=2g\,\tau(c)+\mu\,\lab(c).\]
+Put $\nu=-1$ if $g\delta=2$ and $\nu=1$ if $g\delta=-2$, and
+\[\Phi(c)=2g\,\tau(c)+\nu\,\lab(c).\]
 Consider a step from $c$ to $c'$ whose arc points in direction $o$.
 For a function $f$ on squares write $\Delta f=f(c')-f(c)$ for the change of $f$ along this step.
 By \cref{thm:slit}, $g(\tau(c')-\tau(c))=1+g\kappa$ where $\kappa$ is $\delta$ for an upward
@@ -1221,8 +1521,8 @@ crossing of the slit, $-\delta$ for a downward crossing, and $0$ otherwise.
 \begin{itemize}
 \item Away from the slit, $2g\Delta\tau=2$ and $|\Delta\lab|\le1$, so $\Delta\Phi\ge1$.
 \item Upward across the slit, $\Delta\lab=+3$ and $2g\Delta\tau=2+2g\delta$.
-  If $g\delta=2$ then $\mu=-1$ and $\Delta\Phi=6-3=3$.
-  If $g\delta=-2$ then $\mu=1$ and $\Delta\Phi=-2+3=1$.
+  If $g\delta=2$ then $\nu=-1$ and $\Delta\Phi=6-3=3$.
+  If $g\delta=-2$ then $\nu=1$ and $\Delta\Phi=-2+3=1$.
 \item Downward across the slit, $\Delta\lab=-3$ and $2g\Delta\tau=2-2g\delta$.
   If $g\delta=2$ then $\Delta\Phi=-2+3=1$.
   If $g\delta=-2$ then $\Delta\Phi=6-3=3$.
@@ -1246,12 +1546,16 @@ grid graph with holes by the relative height on the holes.
 The classes below follow this idea.
 They are taken relative to phantom and deleted endpoints, and the degree-one defect is handled by
 \cref{sec:vortex}.
+Throughout this section $U$ is the current set of a leaf, the original $V$ without the deleted
+points (\cref{sec:one,sec:two}), and in the simplest case $U=V'=V\setminus\{t\}$.
+A factor of the leaf lives on $W=U\cup\{t,q\}$, with phantom edges $w$--$t$ and from the current
+endpoint to its phantom $q$.
 
 \paragraph{An informal picture.}
 Fix a path factor $F$.
 Every other path factor $G$ can be described by a height map $\varphi$ on the cells, defined
 precisely below.
-$\varphi$ is $0$ outside the shape.
+$\varphi$ is $0$ outside the bounding box.
 Contiguous cells of equal height form regions, and the boundary between two regions is a
 \emph{fence}.
 Walking along a fence, its edges alternately lie in $F$ and not in $F$.
@@ -1268,22 +1572,22 @@ Other fences, or loops, can be present, but since they do not encircle the hole 
 the class.
 If there is no room to fit the class number of fences around the hole, the class is \emph{empty}
 and can be rejected from consideration for a Hamiltonian path.
-Finding $\varphi$ for a given class starts by assigning the class to the hole cells.
+Finding $\varphi$ for a given class starts by assigning the class to the hole cell $t$.
 The other cells then follow by a Bellman--Ford relaxation of the constraints \emph{step $0$ or $+1$
-in the direction of the arc of $F$}, which raises every cell to the least value they allow
+in the direction of the arc of $F$}, which raises every cell to the least value the constraints allow
 (\cref{fig:classsearch}).
 
-Put together, the algorithm runs Sheffield's loop once for every possible number $k$ of fences
-around the hole, with $k$ counted with its sign.
-Since $|k|\le|V'|$, at most $2|V'|+1$ values need to be tried, and $(2|V'|+1)^2$ pairs with two holes.
+Put together, the algorithm runs Sheffield's loop once for every possible number $h$ of fences
+around the hole, with $h$ counted with its sign.
+Since $|h|\le|U|$ (\cref{thm:classsearch}), at most $2|U|+1$ values need to be tried, and $(2|U|+1)^2$ pairs with two holes.
 For each value the relaxation either finds a factor of that class, which is then the starting factor
 of the loop for that class, or shows that the class is empty.
 If any factor of the class exists, the relaxation finds one, so no class that could hold a
 Hamiltonian path is skipped.
 
 \begin{definition}[reference factor, class]
-Fix a phantom factor $F$ for the hole $t$ (the \emph{reference factor}).
-For a factor $G$ that agrees with $F$ off the edges of $V'$, the \emph{class} of $G$ is
+Fix a factor $F$ of the leaf (the \emph{reference factor}).
+For a factor $G$ that agrees with $F$ off the edges of $U$, the \emph{class} of $G$ is
 $h(G)=D(F,G)(t)/2\in\Z$, read at the hole cell $t$ (Lean \lean{classSearchOne}, \lean{class\_mem\_hRange}).
 With two holes $t$ and $r$ the class is the pair $(D(F,G)(t)/2,\,D(F,G)(r)/2)$.
 \end{definition}
@@ -1326,36 +1630,58 @@ The loop succeeds in class $0$ and is stuck in class $1$.}
 
 \begin{lemma}[class implies \lean{SolidFor}, \lean{solidFor\_of\_holes}]
 \label{lem:classsolid}
-If $G$ and $G'$ have the same class, then $D(G,G')(c)=0$ for every square $c$ that is not a cell of
-$V'$.
+Let every missing point of $U$ be joined by king moves through missing points to a hole or to a
+point left of $U$, as the walk invariant \lean{WS} of \cref{sec:one} provides.
+If two factors $G$ and $G'$ of the leaf have the same class, then $D(G,G')(c)=0$ for every square
+$c$ that is not a cell of
+$U$.
 \end{lemma}
 
 The proof is in \cref{app:class}.
 \Cref{lem:classsolid} supplies exactly the hypothesis \lean{SolidFor} of \cref{thm:cert}.
 
 \begin{lemma}[the run keeps its class, \lean{sf\_flip}, \lean{sf\_flipCol}, \lean{sf\_reduceOutC2}, \lean{HoleRun.lean}, \lean{HoleTwo.lean}]
-A flip of a cell whose left and right sides have the same membership keeps $D(\cdot,X)$ off the
-flipped cell, for every $X$.
-Every flip made by the loop satisfies this condition when it is made.
+\label{lem:runclass}
+A flip of an alternating cell keeps $D(\cdot,X)$ off the flipped cell, for every $X$ with the same
+degrees.
+Every flip made by the loop is of an alternating cell.
 So every state of a run has the class of its start.
 \end{lemma}
 
-The condition is checked flip by flip.
-A composite of degree-preserving flips can change the class, for example when two alternating
-cycles around the hole are toggled together.
+\begin{proof}
+Let $G'$ be $G$ with an alternating cell $c$ flipped, so $G$, $G'$ and $X$ have the same degrees.
+The proof of \cref{lem:D} shows that $D(A,B)$ jumps across each side by
+$\varepsilon_A-\varepsilon_B$.
+So $D(G',X)-D(G,X)$ and $D(G',G)$ have the same jumps and are both $0$ far left, hence equal.
+The vertical edges of $G\oplus G'$ are the left and right sides of $c$.
+They have the same membership, so by \cref{def:arc} their arcs both point into $c$ or both point out
+of $c$, that is, in opposite horizontal directions, and their weights cancel.
+By \cref{def:D}, $D(G',G)$ is therefore $0$ on every square except $c$.
+Every flip of the loop is of an alternating cell.
+A merging cell is alternating by definition.
+A bridge end $E$ has dark laterals and light back and front when it is flipped, and dark back and
+front and light laterals when it is flipped back, so it is alternating both times.
+Lowering a row flips its cells from the last down to the first, and each is alternating when it is
+flipped (\lean{sf\_flipCol}).
+The hole cells are not cells of $U$ and are never flipped, so $D(F,\cdot)=-D(\cdot,F)$ keeps its
+value at the hole cells, and the class does not change.
+\end{proof}
+
+The class is kept flip by flip.
+Toggling an alternating cycle around the hole, which is not a sequence of cell flips, changes it.
 
 \paragraph{The class search.}
-Factors $G$ that agree with $F$ off the edges of $V'$ correspond one to one to \emph{admissible
+Factors $G$ that agree with $F$ off the edges of $U$ correspond one to one to \emph{admissible
 potentials} (Lean \lean{Adm}, \lean{HoleAdm.lean}).
 An admissible potential is an integer function $\varphi$ on squares, zero outside the bounding box,
-whose jump across every edge $e$ is $0$, or equals the sign of the arc of $F$ across $e$ when $e$
-is an edge of $V'$.
-The factor is $G=F\oplus X_\varphi$ where $X_\varphi$ is the set of edges of $V'$ across which
+whose jump across every side is $0$, except that across an edge $e$ of $U$ it may equal the sign of
+the arc of $F$ across $e$.
+The factor is $G=F\oplus X_\varphi$ where $X_\varphi$ is the set of edges of $U$ across which
 $\varphi$ jumps, and $D(F,G)=2\varphi$.
 Prescribing $\varphi(t)=h$ adds one more difference constraint.
 \lean{classSearch} relaxes from below to the least admissible potential with the prescribed values, checks
 it, and returns $F\oplus X_\varphi$ (\lean{Algorithm.lean}).
-\lean{classSearchOne}~$V'\ F\ t\ h$ is \lean{classSearch} with one prescribed value.
+\lean{classSearchOne}~$U\ F\ t\ h$ is \lean{classSearch} with one prescribed value.
 
 \paragraph{How the relaxation runs.}
 The unknowns are the values $\varphi(c)$ on the squares $c$ of the bounding box (\lean{boxSquares}).
@@ -1363,10 +1689,10 @@ Squares outside the box keep the value $0$.
 For a side $e$ between a lower or left square $c^-$ and an upper or right square $c^+$, the rule
 \emph{jump $0$ or the sign $\sigma(e)$ of the arc of $F$} becomes the two inequalities
 \[\min(0,\sigma(e))\le\varphi(c^+)-\varphi(c^-)\le\max(0,\sigma(e)),\]
-and a side that is not an edge of $V'$ gets $0\le\varphi(c^+)-\varphi(c^-)\le0$.
-The prescribed hole cell starts at $h$ and every other square at $-w$, where $w$ is the width of the
+and a side that is not an edge of $U$ gets $0\le\varphi(c^+)-\varphi(c^-)\le0$.
+The prescribed hole cell starts at $h$ and every other square at $-\omega$, where $\omega$ is the width of the
 box (\lean{kInitA}).
-No admissible potential is lower than $-w$, because it is $0$ outside the box and changes by at most
+No admissible potential is lower than $-\omega$, because it is $0$ outside the box and changes by at most
 $1$ from one square to the next.
 A round raises every square, all at once, to the largest value that its four sides force from the
 current values of its neighbours, or keeps it when that is lower (\lean{lowerBound},
@@ -1420,31 +1746,74 @@ Round~$3$ is the fixed point, which equals~(d).}
 \end{figure}
 
 \begin{theorem}[\lean{classSearchOne\_sound}, \lean{classSearchOne\_complete}, \lean{classSearchOne\_solidFor}, \lean{classSearchOneCost\_le}]
+\label{thm:classsearch}
 A factor returned by \lean{classSearchOne} has class $h$.
-If some factor has class $h$, \lean{classSearchOne} returns a factor $G$ with $\lean{SolidFor}\ V'\ G\ G'$ for
+If some factor has class $h$, \lean{classSearchOne} returns a factor $G$ with $\lean{SolidFor}\ U\ G\ G'$ for
 every $G'$ of class $h$.
-If the bounding box of $V'$ has width and height below $|V'|$, the cost is at most
+If the bounding box of $U$ has width and height below $|U|$, the cost is at most
 $1000(|W|+1)^4$.
 \end{theorem}
 
-Two facts give this bound.
+\begin{proof}
+\emph{Factors and potentials.}
+Let $G$ have the degrees of $F$ and agree with $F$ off the edges of $U$, and put
+$\varphi=D(F,G)/2$.
+By the proof of \cref{lem:D}, $\varphi$ jumps across $e$ by the sign of the arc of $F$ when
+$e\in F\oplus G$ and by $0$ otherwise.
+The squares outside the box form a connected region, and no side between two of them is an edge of
+$U$, so $\varphi$ is constant there, and it is $0$ far left.
+So $\varphi$ is admissible.
+Conversely let $\varphi$ be admissible and $X_\varphi$ the edges of $U$ across which it jumps.
+Going once around a point $p$, the jumps of $\varphi$ add up to $0$.
+Each jump is $\pm1$ according to the arc of $F$, and going around $p$ the arcs of the dark edges of
+$F$ point one way and those of the light edges the other way (\cref{sec:prelim}).
+So $X_\varphi$ has as many dark as light edges at $p$, and toggling them keeps the degree of $p$.
+Hence $G=F\oplus X_\varphi$ is a factor with the degrees of $F$, and $D(F,G)$ and $2\varphi$ have
+the same jumps and are both $0$ far left, so $D(F,G)=2\varphi$.
+A factor of class $h$ is therefore the same as an admissible $\varphi$ with $\varphi(t)=h$.
+
+\emph{The relaxation.}
+Each inequality between two neighbouring squares gives a lower bound on each of them, of the form
+$\varphi(c')\ge\varphi(c)+\beta$.
+A round replaces $f(c')$, for every square $c'$ of the box, by the largest such bound when it is
+larger, with the squares outside the box fixed at $0$.
+After $k$ rounds, $f(c)$ is the largest value of $f_0(c_0)+\beta_1+\dots+\beta_j$ over walks
+$c_0,\dots,c_j=c$ with $j\le k$, where $f_0$ is the start.
+Suppose an admissible $\psi$ with $\psi(t)=h$ exists.
+Then $\psi\ge f_0$, because $\psi\ge-\omega$ everywhere and $\psi(t)=h$.
+Adding the inequalities of $\psi$ around a closed walk shows that its $\beta$ add up to at most $0$,
+so dropping a closed part of a walk never lowers its value.
+Walks of at most $|S|-1$ steps therefore reach every value, where $S$ is the list of squares of the
+box, and $f$ is fixed after at most $|S|+1$ rounds, the fuel $\lean{kFuel}$ (\lean{relax\_bf}).
+By induction on the rounds, $f\le\psi$.
+The fixed point satisfies every lower bound on a square of the box.
+The remaining conditions are upper bounds on single squares, namely the bounds that the squares
+outside the box, fixed at $0$, put on their neighbours in the box, and $f(t)\le h$.
+$\psi$ satisfies them, so $f\le\psi$ does too.
+So \lean{isAdmissible} accepts $f$ (\lean{relax\_fix}, \lean{check\_iff}).
+
+\emph{Soundness and completeness.}
+If \lean{isAdmissible} accepts the final $f$, then $f$ is admissible with $f(t)=h$, and
+$F\oplus X_f$ is a factor of class $h$.
+If some factor of class $h$ exists, the previous paragraph shows that the check accepts.
+The returned $G$ and every $G'$ of class $h$ have the same class, so \cref{lem:classsolid} gives
+$\lean{SolidFor}\ U\ G\ G'$.
+
+\emph{Cost.}
 The potentials are stored in an array indexed by box position, so each lookup costs a constant
-(\lean{relaxA}, \lean{toFA}).
-The array relaxation simulates the list relaxation of the correctness proof (\lean{toFA\_relaxA},
-\lean{classPotential\_eq}).
-The number of rounds is bounded as in Bellman--Ford (\lean{relax\_bf}, \lean{HoleRelax.lean}).
-Let $\psi$ be a solution and $f$ the current potential.
-A cell that rises in round $k+1$ has a neighbour that rose in round $k$, and $\psi-f$ does not
-decrease along such a chain of cells.
-A chain longer than the number of cells repeats a cell, where $\psi-f$ would have to drop.
-So $|S|+1$ rounds reach the fixed point, where $S$ is the list of squares of the box, and the fuel is
-$\lean{kFuel}=|S|+1$.
+(\lean{relaxA}, \lean{toFA}), and the array relaxation computes the same values as the relaxation
+above (\lean{toFA\_relaxA}, \lean{classPotential\_eq}).
+A narrow box has at most $|U|^2$ squares, so $|S|+1$ rounds of $O(|S|)$ work and the check give
+the bound.
 In general \lean{classSearch} with $k$ prescribed values costs at most $500(k+1)(|W|+1)^4$
 (\lean{classSearchCost\_le}).
+\end{proof}
 
-The bounding box is narrow whenever a Hamiltonian path exists (\lean{narrow\_of\_ncomp}), and this is
+The bounding box is \emph{narrow} when its width and height are below $|U|$.
+It is narrow whenever a Hamiltonian path exists (\lean{narrow\_of\_ncomp}), and this is
 tested first (\lean{isNarrow}).
-Classes lie in $[-|V'|,|V'|]$, so the list \lean{classRange} of $2|V'|+1$ values covers them.
+Classes lie in $[-|U|,|U|]$, because $\varphi$ changes by at most $1$ from one square to the next and
+is $0$ outside a narrow box, so the list \lean{classRange} of $2|U|+1$ values covers them.
 
 % =====================================================================
 \section{One inner endpoint}
@@ -1483,16 +1852,28 @@ For every factor $G$ of the current two-phantom setting, $G\cup P$ has degree $1
 $1$ at $r$, and degree $2$ at every other inner point of the original $V$.
 \end{lemma}
 
+\begin{proof}
+The points of the original $V$ are $t$, the points of the current set $U$, and the deleted points,
+which are the points of $P$.
+A point of $U$ has degree $2$ in $G$, and $P$ has no edge at it.
+The point $t$ has degree $1$ in $G$, from its edge $w$--$t$, and is not on $P$.
+An inner point of $P$ has degree $2$ in $P$ and no edge of $G$.
+The end $q$ of $P$ has one edge in $P$ and one, its phantom edge, in $G$.
+The other end $r$ has one edge in $P$ and none in $G$, or, when $P$ is the single point $r=q$, no
+edge in $P$ and one in $G$.
+\end{proof}
+
 The phantom $q$ gets one edge from $G$ and one from $P$.
-If the phantom were another missing point, $q$ would keep degree $1$ in $G\cup P$, and an inner $q$
-would be a second vortex.
+If the phantom of the current endpoint were a missing point other than the last deleted one, the
+last deleted point would keep degree $1$ in $G\cup P$, and if it were inner it would be a second
+vortex.
 The point $r$ has a missing king neighbour, so it is not inner.
 So $G\cup P$ has the single vortex $t$ on the solid original set.
 Its arcs agree with those of $G$ on the cells of the current set, so climbs of $G$ do not close
 (\lean{ws\_acyc}, \lean{acyc\_ext}, \cref{thm:vortex}).
 
 \begin{definition}[walk invariant \lean{WS}]
-\lean{WS} records the original solid set, the inner $t$, the current set $U$, the endpoint $s$, its
+\lean{WS} records the original solid set, the inner $t$, the current set $U$, the current endpoint $s$, its
 phantom $q$, the edges $w$--$t$ and $s$--$q$, the deleted path $P$ with the degree condition of
 \cref{lem:wsdeg}, and the fact that every missing point of $U$ joins $t$ or $r$ through missing
 points or escapes to the left.
@@ -1503,9 +1884,37 @@ The last field gives \lean{SolidFor} within a class by \cref{lem:classsolid}.
 deletion.
 
 \begin{theorem}[\lean{oneHoleCase\_main}, \lean{HoleWalkCost.lean}]
+\label{thm:one}
 For solid $V$, inner $t$, and $s\ne t$ with a missing king neighbour, \lean{oneHoleCase} decides the
 problem within $2\,513\,000\,(|V|+3)^5$ steps.
 \end{theorem}
+
+\begin{proof}
+By \cref{lem:del}, applied to $t$, to $s$ and to each further deletion, $V$ has a Hamiltonian
+$s$--$t$ path exactly when some leaf of the walk has a two-phantom factor with one piece.
+The measure \lean{wmuG} bounds the walk, so every branch reaches a leaf within the fuel $10$, and
+\lean{WS} holds at every leaf (\lean{ws\_init}, \lean{ws\_step}).
+Fix a leaf with current set $U$.
+If its box is not narrow, it has no Hamiltonian path (\lean{narrow\_of\_ncomp}) and the answer
+\lean{false} is correct.
+Otherwise every class lies in \lean{classRange}, and for each class the final test runs
+\cref{thm:classsearch} and then the loop from the factor it returns.
+Within one class the hypotheses of \cref{sec:sheffield} hold.
+Every corner of a cell of $U$ has degree $2$.
+By \cref{lem:runclass} every state of the run has the class of its start, so any two factors that
+occur are in one class and \cref{lem:classsolid} gives \lean{SolidFor}.
+By \cref{lem:wsdeg}, $G\cup P$ has the single vortex $t$ on the original solid set, so by
+\cref{thm:vortex} no climb closes, and this passes to $G$ on the cells of $U$ (\lean{ws\_acyc},
+\lean{acyc\_ext}).
+The walk stops only when $w$ and the current endpoint are Far with phantoms that are not opposed.
+So the argument of \cref{thm:twoph} applies within the class.
+A stuck phase certifies that no factor of the class has one piece, and otherwise the loop reaches
+one piece.
+A Hamiltonian path of the leaf lies in some class of \lean{classRange}, so the final test finds it
+whenever it exists.
+For the cost, the two deletions give $16$ walk starts, each walk makes at most $13$ final tests
+(\cref{par:ring}), and each final test costs at most $12\,000\,(|U|+3)^5$.
+\end{proof}
 
 % =====================================================================
 \section{Two inner endpoints}
@@ -1528,13 +1937,30 @@ boundaries of both.
 
 \begin{theorem}[height with two slits, \lean{height2}, \lean{TwoVortex.lean}]
 \label{thm:height2}
-Let $V$ be solid with two distinct inner points $v_1,v_2$ of degree $1$ in $H$, and degree $2$ at
-every other inner point.
-Let $F_1,F_2$ be unit flows from $v_1,v_2$ to a common far point.
-Then there are $\tau$ and $\delta_1,\delta_2\in\{2,-2\}$ such that across every side $e$ between
-cells, oriented from lower or left to upper or right, the jump of $\tau$ is the arc ($\pm1$) minus
-$\delta_1F_1(e)+\delta_2F_2(e)$.
+Let $V$ be solid, and let $H$ be a factor with degree $1$ at two distinct inner points $v_1,v_2$ and
+degree $2$ at every other inner point.
+Choose the slits of $v_1$ and $v_2$ as below.
+Then there are $\tau$ and $\delta_1,\delta_2\in\{2,-2\}$ such that for every step from a cell $c$ to a
+neighbouring cell $c'$
+\[\tau(c')-\tau(c)=\varepsilon+\delta_1k_1+\delta_2k_2,\]
+where $\varepsilon=+1$ when the arc of $H$ points from $c$ to $c'$ and $-1$ otherwise, and
+$k_i\in\{-1,0,1\}$ records a crossing of slit $i$.
+For a slit that goes left, $k_i=1$ for an upward crossing and $-1$ for a downward one.
+For the slit that goes down, $k_i=1$ for a leftward crossing and $-1$ for a rightward one (Lean
+\lean{kL}, \lean{kD}, \lean{tau\_step}).
 \end{theorem}
+
+\begin{proof}
+As in \cref{app:slit}, with two imbalanced points.
+The arcs balance at every inner point except $v_1$ and $v_2$, where they are out of balance by $2$.
+A unit flow from $v_i$ along slit $i$ and on to a common far point outside $V$, multiplied by a
+suitable $\delta_i\in\{2,-2\}$ and subtracted, removes the imbalance at $v_i$ and moves it to the far
+point (\lean{height2}).
+The imbalances at points that are not inner are moved there along edges that are not sides between
+two cells, which changes no arc between two cells.
+The total imbalance is $0$, so afterwards the weights balance at every point and are the jumps of a
+function $\tau$.
+\end{proof}
 
 The slits are chosen by the relative position of the vortices.
 \begin{itemize}
@@ -1589,19 +2015,13 @@ $V$ in a fixed direction.
 
 \begin{proof}
 Fix the direction $o$, put $g=\pm1$ as in \cref{thm:vortex}, and take $\tau,\delta_1,\delta_2$ from
-\cref{thm:height2} with the slits above.
-For a step from cell $c$ across side $e$ to $c'$, let $k_i\in\{-1,0,1\}$ record a crossing of
-slit $i$.
-For a left slit, $k_i=1$ for an upward crossing and $k_i=-1$ for a downward one.
-For the downward slit, $k_2=1$ for a leftward crossing and $k_2=-1$ for a rightward one
-(Lean \lean{kL}, \lean{kD}).
-Then $\tau(c')-\tau(c)=(\pm1)+\delta_1k_1+\delta_2k_2$, where the first term is $+1$ exactly when the
-arc points from $c$ to $c'$ (\lean{tau\_step}).
-Put $\mu_i=-1$ if $g\delta_i=2$ and $\mu_i=1$ if $g\delta_i=-2$, so $g\delta_i=-2\mu_i$.
+\cref{thm:height2} with the slits above, so that a step from $c$ to $c'$ has
+$\tau(c')-\tau(c)=\varepsilon+\delta_1k_1+\delta_2k_2$.
+Put $\nu_i=-1$ if $g\delta_i=2$ and $\nu_i=1$ if $g\delta_i=-2$, so $g\delta_i=-2\nu_i$.
 Define
-\[\Phi(c)=3g\,\tau(c)+2\mu_1\ell_1(c)+2\mu_2\ell_2(c).\]
-For a step whose arc points in direction $o$, $g\Delta\tau=1-2\mu_1k_1-2\mu_2k_2$, so
-\[\Delta\Phi=3\,(1-2\mu_1k_1-2\mu_2k_2)+2\mu_1\Delta\ell_1+2\mu_2\Delta\ell_2.\]
+\[\Phi(c)=3g\,\tau(c)+2\nu_1\ell_1(c)+2\nu_2\ell_2(c).\]
+For a step whose arc points in direction $o$, $g\Delta\tau=1-2\nu_1k_1-2\nu_2k_2$, so
+\[\Delta\Phi=3\,(1-2\nu_1k_1-2\nu_2k_2)+2\nu_1\Delta\ell_1+2\nu_2\Delta\ell_2.\]
 Two geometric facts hold for every unit step (\lean{geo\_rows}, \lean{geo\_same}).
 \begin{enumerate}[label=(G\arabic*)]
 \item If $k_i=0$ then $|\Delta\ell_i|\le1$.
@@ -1620,20 +2040,31 @@ Now there are three cases.
 \item Both pairs are zero.
   Then $\Delta\Phi=3$.
 \item Pair $i$ is nonzero with $k_i=0$.
-  Then $\Delta\Phi=3+2\mu_i\Delta\ell_i\ge3-2=1$.
+  Then $\Delta\Phi=3+2\nu_i\Delta\ell_i\ge3-2=1$.
 \item Pair $i$ is nonzero with $k_i=\pm1$.
-  Then $\Delta\ell_i=2k_i$ and $\Delta\Phi=3-6\mu_ik_i+4\mu_ik_i=3-2\mu_ik_i\ge1$.
+  Then $\Delta\ell_i=2k_i$ and $\Delta\Phi=3-6\nu_ik_i+4\nu_ik_i=3-2\nu_ik_i\ge1$.
 \end{itemize}
 So $\Phi$ rises by at least $1$ along every step, and no closed walk exists
 (\lean{arc\_of\_pot}).
-The case of $v_2$ below $v_1$, or right of it, follows by exchanging the names
+The case of $v_2$ below $v_1$, or left of it, follows by exchanging the names
 (\lean{arc\_vortex2}).
 \end{proof}
 
 \begin{theorem}[\lean{twoHoleCase\_main}, \lean{HoleTwoVCost.lean}]
+\label{thm:two}
 For solid $V$ and distinct inner $s,t$, \lean{twoHoleCase} decides the problem within
 $5\,217\,000\,(|V|+3)^6$ steps.
 \end{theorem}
+
+\begin{proof}
+As for \cref{thm:one}, with two changes.
+The deleted path now starts at the inner point $r=s$, so $G\cup P$ has the two vortices $t$ and $r$,
+and \cref{thm:vortex2} replaces \cref{thm:vortex}.
+Classes are pairs, all of them lie in $\lean{classRange}^2$, and \lean{classSearch} with two
+prescribed values replaces \lean{classSearchOne} (\lean{kFind2\_solidFor}), with the same proof as
+\cref{thm:classsearch}.
+For the cost, there are again at most $208$ final tests, each at most $25\,000\,(|U|+3)^6$.
+\end{proof}
 
 % =====================================================================
 \section{The algorithm and its running time}
@@ -1663,6 +2094,15 @@ Swapping the endpoints in the third row uses that a path read backwards is a pat
 \label{tab:cases}
 \end{table}
 
+\begin{proof}[Proof of \cref{thm:main}]
+A point of $V$ that is not inner has a missing king neighbour (\lean{miss\_of\_not\_inner}).
+So in each row of \cref{tab:cases} the hypotheses of the theorem named there hold, and
+\cref{thm:bdry}, \cref{thm:one} or \cref{thm:two} applies, where the third row uses that a Hamiltonian $t$--$s$
+path read backwards is a Hamiltonian $s$--$t$ path (\lean{hp\_swap}).
+Each case decides the problem, and the largest bound plus $10$ for the dispatch is at most
+$5\,220\,000\,(|V|+3)^6$.
+\end{proof}
+
 \paragraph{Where the exponents come from.}
 One round of the fast loop (a phase and its reduction) costs at most $3000(|V|+3)^3$
 (\lean{twoPhantomLoopCost\_le}).
@@ -1675,8 +2115,9 @@ The leading constants count the final tests of the deletion walks.
 In the hole cases the two deletions before the walk give $4\cdot4=16$ walk starts, and each walk
 makes at most $13$ final tests and visits at most $21$ nodes (\cref{par:ring}), so $208$ final tests
 of cost at most $12\,000\,(|U|+3)^5$ (one hole) or $25\,000\,(|U|+3)^6$ (two holes).
-When neither endpoint is inner, the first step of the walk has no deleted neighbour yet, so a walk makes at most
-$4\cdot13=52$ final tests, and the possible deletion of $s$ before it gives $4$ walks.
+When neither endpoint is inner, the initial $t$ may have no usable phantom and no deleted neighbour,
+so the walk can branch into $4$ ring walks of at most $13$ final tests each, $52$ in all, and the
+possible deletion of $s$ before it gives at most $4$ such walks.
 
 \paragraph{Caveats.}
 The cost functions charge unit cost for operations on finite sets of points and edges.
@@ -1684,8 +2125,7 @@ A machine implementation pays more for these operations, so its exponent can be 
 stays polynomial.
 The Lean statement does not link \lean{decideHamPathCost} to \lean{decideHamPath} formally.
 The link is the parallel structure of the two definitions, which the reader checks.
-The companion Umans--Lenhart formalization in the same repository uses a step-counting monad instead
-(\cref{sec:lean}).
+The companion Umans--Lenhart formalization in the same repository uses a step-counting monad instead.
 
 \paragraph{The walk constant: the ring potential.}
 \label{par:ring}
@@ -1708,13 +2148,15 @@ A step along the ring to $i+1$ deletes $i$ and leaves the child with the run aft
 An outward step is a stop worth $1$, paid by the weight of $i$.
 So the children's potentials sum to at most $L$ (\lean{ring\_step}).
 An opposed state at king distance $2$ has four lattice steps.
-One goes onto its phantom, which is absent, one goes toward $w$ (potential at most $11$), and two go
-sideways, stay at distance $2$ and stop.
+One goes onto its phantom, which is absent, and the other three lead to states of potential at most
+$11$, $1$ and $1$.
 So its children sum to at most $11+1+1=13$ (\lean{opp\_step}).
 Hence a walk makes at most $13$ final tests.
-The node potential $M$, with weight $1$ plus the number of outward steps, bounds its nodes by $21$ (\lean{holeCaseWalkCost\_pot}, \lean{boundaryEndpointsWalkCost\_pot}).
+The node potential $M$ is defined like $L$, with each present ring point weighted by $1$ plus its
+number of outward steps, and the same argument bounds the nodes of a walk by $21$
+(\lean{holeCaseWalkCost\_pot}, \lean{boundaryEndpointsWalkCost\_pot}).
 All facts about the ring are proved by \lean{decide}, which evaluates them exhaustively over the $4$
-rotations and $28$ relative positions.
+rotations and the $28$ relative positions of a walk state that the facts mention.
 
 \input{pseudocode.tex}
 
@@ -1741,7 +2183,6 @@ The command \lean{\#print axioms} applied to
 \lean{SolidGridHam.HP.decideHamPath\_main} lists \lean{propext}, \lean{Classical.choice} and
 \lean{Quot.sound}.
 The same holds for \lean{stuck\_minimal} and \lean{arc\_vortex2}.
-These outputs were obtained from the built library on 2026-10-18.
 No file of the library contains \lean{sorry}, and the build has no warnings.
 
 \paragraph{Trusted definitions.}
@@ -1767,25 +2208,17 @@ the same name, the same control flow, the same fuel constants and the same itera
 Its fast mode adds answer-preserving speedups, and the C and JavaScript implementations port the
 fast mode.
 All of them return the path on a ``yes'' answer.
-The tests compare the modes and the implementations with each other and with an exact brute force.
 The implementations are not verified.
 
 \paragraph{How to check.}
 With \lean{elan} installed, run \lean{lake exe cache get} and \lean{lake build} in \lean{lean/}.
 Then run \lean{lake env lean} on a file containing
 \lean{import SolidGridHam.Path.HPFinal} and \lean{\#print axioms SolidGridHam.HP.decideHamPath\_main}.
-The script \lean{scripts/check.sh} does all of this.
-It builds the library with warnings treated as errors, prints the axioms of the main results, fails
-unless they are \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}, and runs the cost-model
-lint of the Umans--Lenhart part.
 
 % =====================================================================
 \section{Worked example}
 \label{sec:example}
 
-% Checked with lib/python/hpst_ref.py (ref mode).  The panels of fig_example and
-% fig_bulk are generated by figures/gen.py from the same code (leaf_states), and
-% gen.py asserts the piece counts and phase outcomes stated here.
 
 \subsection{One complete run}
 \label{sec:run}
@@ -1878,7 +2311,7 @@ The leaf for $(3,1)$ has $U=V\setminus\{t,(3,0),(2,0),(2,1)\}$, endpoint $(3,1)$
 $q=(2,1)$, and deleted path $P=(3,0)$--$(2,0)$--$(2,1)$ (\cref{fig:walk}, right).
 The set $U$ has exactly one Hamiltonian path from $(3,1)$ to $(1,0)$,
 \[(3,1),(3,2),(3,3),(2,3),(2,2),(1,2),(1,3),(0,3),(0,2),(0,1),(0,0),(1,0).\]
-Adding back $t$ and the deleted path gives a second Hamiltonian path of $V$ from $s$ to $t$.
+Adding back $t$ and the deleted path gives a Hamiltonian path of $V$ from $s$ to $t$.
 
 At this leaf the point $(2,1)$ is inner in $V$ and missing from $U$.
 In $G\cup P$ it has one edge from $P$ and one phantom edge from $G$, so its degree is $2$
@@ -1922,7 +2355,7 @@ The cell $(1,2)$ has dark left and right sides and light top and bottom.
 Its left corners lie on the cycle and its right corners on the path, so it is a merging cell.
 
 \paragraph{Arcs, slit height and potential.}
-The deleted path is empty, so $G_0\cup P=G_0$ on $V$.
+The deleted path is the single point $s$, with no edges, so $G_0\cup P=G_0$ on $V$.
 Its only inner point of degree $1$ is $t$.
 The slit of $t=(1,1)$ is the side between the cells $(0,0)$ and $(0,1)$.
 Solving the jump equations of \cref{thm:slit} on the nine cells is consistent only for $\delta=-2$.
@@ -1938,7 +2371,7 @@ $y\backslash x$ & 0 & 1 & 2\\\hline
 Going once counterclockwise around $t$ through the cells $(0,0),(1,0),(1,1),(0,1)$, the arcs give
 $-1,-1,-1,+1$, a total of $-2$.
 This is the vortex.
-For $o=\lean{true}$ we have $g=1$, $g\delta=-2$ and $\mu=1$, so $\Phi=2\tau+\lab$.
+For $o=\lean{true}$ we have $g=1$, $g\delta=-2$ and $\nu=1$, so $\Phi=2\tau+\lab$.
 Its values are $6,5,3$ on the bottom row (left to right), $3,4,6$ on the middle row and $5,6,4$ on
 the top row.
 Each of the twelve arcs between these cells goes from a smaller to a larger value of $\Phi$.
@@ -1954,7 +2387,7 @@ Most of the paper is spent on moving the endpoints, because the proof must handl
 $s$ and $t$.
 When $s$ and $t$ are far apart, the walks stop at once and the work is elsewhere.
 This section describes what the algorithm does then, with one run on $34$ points
-(\cref{fig:bulk}).
+(\cref{fig:bulk}), whose endpoints are at king distance $3$ and whose walks also stop at once.
 
 \paragraph{The endpoints cost little.}
 Deleting $t$ (branch $w$) and $s$ (branch $x$) moves each endpoint by one step.
@@ -1975,7 +2408,7 @@ around it like a vortex (\cref{sec:vortex}).
 Factors are grouped into classes by the relative height $D$ at the cells around each hole.
 Within one class, the phase and the certificate work as in Sheffield's cycle algorithm, because
 the slit height and the quadrant label give a potential that rises along every climb
-(\cref{sec:vortex}).
+(\cref{sec:vortex}), and with two holes the three-sector labels do (\cref{sec:two}).
 Across classes they need not, so the final test runs Sheffield's loop once per class.
 
 \paragraph{What the final test does.}
@@ -1998,20 +2431,20 @@ A phase makes moves of three kinds.
   It takes a critical cell, follows its row to the last cell where the heights turn, and flips that
   last cell.
   The flip splits a piece, so the count goes up by one, but it exposes new cells.
-\item An \emph{odd row} or a \emph{twist} ends the phase like a merge, with a half bridge in place of
-  the merging cell.
+\item An \emph{odd row} or a \emph{twist} ends the phase like a merge.
 \end{itemize}
-The reduction then flips the merging cell (or the half bridge), and walks back through the bridges,
+The reduction then applies the half bridge (the flip of the merging cell, or the lowering of the
+row), and walks back through the bridges,
 newest first.
 Each bridge is either lowered (the cells of its row before the last are flipped) or undone (its last
 cell is flipped back), as the plan of \cref{sec:undo} decides.
 The net effect of a round is one piece fewer.
 If a phase ends stuck, no merge, bridge step or row is available, and the certificate shows that no
-factor of the class has fewer pieces.
+factor of the class has fewer pieces than the phase started with.
 The loop then gives up on this class.
 
 \paragraph{The example.}
-\Cref{fig:bulk} shows a run on a $6\times6$ block with four points removed from the left column.
+\Cref{fig:bulk} shows a run on a $6\times6$ block with two points removed from the left column.
 Both endpoints $s=(4,4)$ and $t=(4,1)$ are inner, at king distance $3$, so \lean{decideHamPath} calls
 \lean{twoHoleCase} (\textsc{TwoHoleCase}).
 The first branch, $w=(5,1)$ and $x=(5,4)$, already succeeds.
@@ -2022,7 +2455,7 @@ The first branch, $w=(5,1)$ and $x=(5,4)$, already succeeds.
   The only nonempty class pair is $(0,0)$, and its least factor has $4$ pieces, a long path and
   three $4$-cycles (\cref{fig:bulk}c).
 \item Phase~1 flips the merging cell $(1,4)$ and joins the top-left cycle to the path.
-  Phase~2 flips $(2,0)$ and joins the cycle at $(2,1)$.
+  Phase~2 flips $(2,0)$ and joins a second $4$-cycle to the path.
 \item Phase~3 starts with $2$ pieces, the path and the cycle on $(4,2),(5,2),(4,3),(5,3)$
   (\cref{fig:bulk}e).
   No cell between them is alternating, so no merge is possible.
@@ -2037,14 +2470,13 @@ The first branch, $w=(5,1)$ and $x=(5,4)$, already succeeds.
   One piece remains (\cref{fig:bulk}g), and the loop answers yes.
 \end{itemize}
 In this round three cells were flipped, $(2,2)$, $(1,3)$ and $(3,2)$.
-No single flip joins the last cycle to the path, and the bridge is what makes the two-step join
-possible.
+No single flip joins the last cycle to the path, and the join goes through the bridge.
 Adding back $s$ and $t$ gives the Hamiltonian path of \cref{fig:bulk}h.
 
 \begin{figure}[t]
 \centering
 \input{figures/fig_bulk.tex}
-\caption{One run of \lean{decideHamPath} with both endpoints inner and far apart, in execution order.
+\caption{One run of \lean{decideHamPath} with both endpoints inner, in execution order.
 Grey squares are the cells around the two holes, red circles the deleted endpoints, dashed teal
 edges the phantom edges, yellow cells merging cells, and the dashed box a bridge row.
 (a) The input.
@@ -2080,13 +2512,14 @@ the phantoms do not interfere, and an inner endpoint becomes a vortex, handled b
 and a search over flip classes.
 The proof also repairs the stuck case of Sheffield's counting argument with chained rows.
 
-Two points are checked outside Lean.
-The definition of \lean{Solid} is cross-checked by computation against the face definition, not
-proved equivalent.
-The step bound is for cost functions that mirror the algorithm, with a constant cost for each
-primitive operation on finite sets, and it is not a Turing machine bound.
-The correctness statement alone is registered with the Palomar registry as
-PALOMAR-2026-10-19-000001.
+Two points rest on a reader's check rather than on Lean.
+The definition of \lean{Solid} is not proved equivalent to the face definition.
+The cost functions are not linked formally to the algorithm, and the reader checks that they follow
+its structure.
+The step bound is for these cost functions, with a constant cost for each primitive operation on
+finite sets, and it is not a Turing machine bound.
+The correctness statement alone is registered with the Palomar registry
+(\url{https://palomar-registry.org}) as PALOMAR-2026-10-19-000001.
 
 The Lean library, the reference implementations in Python, C and JavaScript, an interactive demo
 and the source of this paper are at \url{https://github.com/zzyzek/SolidGridGraphHamPath}.
@@ -2118,8 +2551,8 @@ diagonal edges~\cite{kkb2024}.
 A 2025 paper on rectangles with an L-shaped hole says that few results exist for grid graphs with
 holes~\cite{rouhani2025}.
 The longest cycle problem in solid grid graphs is also described as open~\cite{sardroud2015}.
-The literature search behind this paper found no claim of a polynomial algorithm for Hamiltonian
-paths in solid grid graphs between 2024 and 2026.
+We know of no claim of a polynomial algorithm for Hamiltonian paths in solid grid graphs from 2024 to
+2026.
 
 \paragraph{Sheffield's claim.}
 Sheffield's paper~\cite{sheffield2000} gives a height-function algorithm for Hamiltonian cycles in
@@ -2133,8 +2566,8 @@ So the problem is better described as asserted without proof than as untouched.
 Two points show that the assertion needed work.
 \begin{enumerate}
 \item The local rule of Sheffield's \S4.1 excludes an increasing sequence of faces around a vertex,
-  using $\varphi(v)=2$.
-  At an endpoint $\varphi(v)=1$ and the rule fails.
+  using degree $2$ at $v$.
+  At an endpoint the degree is $1$ and the rule fails.
   For an inner endpoint this failure is the vortex of \cref{sec:vortex}.
   Without a substitute, the climb in the final count need not terminate.
 \item The written proof of the stuck case (\S4.8) has a gap that is independent of endpoints
@@ -2156,7 +2589,7 @@ New here are the following.
   configuration of Lemma~4.
 \item Phantom endpoints, the two-phantom core under the Far condition, and the deletion walks.
 \item Classes relative to phantom and deleted endpoints, and the class search by relaxation, ported
-  from the author's Lean formalization of Umans--Lenhart with holes.
+  from a Lean formalization of the Umans--Lenhart algorithm extended to grid graphs with holes.
 \item The handling of degree-one defects by slit heights with quadrant and three-sector labels.
 \end{itemize}
 
@@ -2170,14 +2603,12 @@ These works use the defect for scaling and correlation computations.
 For domino tilings of regions with holes, Saldanha, Tomei, Casarin and Romualdo describe flip
 components through height sections on a covering~\cite{saldanha1995}.
 Thurston's height functions for tilings are background~\cite{thurston1990}.
-We did not find the potential built from a slit height and a sector label, used here to rule out
-closed climbs, in the literature.
-The literature search does not prove that it is absent.
+We know of no earlier use of a potential built from a slit height and a quadrant or three-sector
+label to rule out closed climbs.
 
 \paragraph{Formal verification.}
-The literature search did not cover machine-checked graph algorithms.
-The present development builds on the author's own Lean formalization of the Umans--Lenhart cycle
-algorithm (\lean{ulhc\_main}, same repository).
+The present development builds on the Lean formalization of the Umans--Lenhart cycle algorithm in
+the same repository (\lean{ulhc\_main}).
 
 \section{Lean module map}
 \label{app:map}
@@ -2216,31 +2647,22 @@ dispatcher & \lean{HPFinal} & \lean{decideHamPath\_main}\\
 \section{Proofs deferred from the main text}
 \label{app:proofs}
 
-\subsection{Deletion (\cref{lem:del})}
-
-Let $H$ be a Hamiltonian $s$--$t$ path of $V$.
-The point $t$ has degree $1$, so exactly one edge $w$--$t$ of $H$ meets $t$.
-Since $|V|\ge3$, $w\ne s$.
-Removing this edge gives a Hamiltonian $s$--$w$ path of $V\setminus\{t\}$.
-Conversely, adding the edge $w$--$t$ to a Hamiltonian $s$--$w$ path of $V\setminus\{t\}$ gives a
-Hamiltonian $s$--$t$ path of $V$.
-
 \subsection{The slit height (\cref{thm:slit})}
 \label{app:slit}
 
-Let $w(e)=\pm1$ be the arc weight on sides between two cells and $0$ on other edges
+Let $a(e)=\pm1$ be the arc weight on sides between two cells and $0$ on other edges
 (Lean \lean{wC}).
 The \emph{defect} of a weight at a point $p$ is the sum over the four edges at $p$ with the signs
 of the balance relation (Lean \lean{defect}).
-A potential with jumps $w$ exists when the defect vanishes at every point (Lean
+A potential with jumps $a$ exists when the defect vanishes at every point (Lean
 \lean{Potential.lean}).
-At inner points of degree $2$ the defect of $w$ is $0$.
+At inner points of degree $2$ the defect of $a$ is $0$.
 At the vortex it is $\delta=\pm2$.
 At points that are not inner, some edge at the point is not between two cells, and the defect can be
 nonzero.
-Each such point $q$ is joined to a fixed point $O$ far left by a path of edges not between two
+Each such point $z$ is joined to a fixed point $O$ far left by a path of edges not between two
 cells, because $V$ is solid (\lean{reach\_far}).
-Subtracting the defect of $q$ times a unit flow along this path removes the defect at $q$ without
+Subtracting the defect of $z$ times a unit flow along this path removes the defect at $z$ without
 changing any weight between two cells.
 The vortex's defect is removed by a unit flow along the slit, which runs straight left to $O$.
 The total defect is $0$ (\lean{sum\_defect}), so after these corrections the weight is balanced
@@ -2252,20 +2674,23 @@ Across sides between two cells, $\tau$ jumps by the arc weight, plus $\delta$ on
 \label{app:class}
 
 Let $G,G'$ have the same class.
-Their phantom edges coincide, so $G\oplus G'$ consists of edges of $V'$.
+Their phantom edges coincide, so $G\oplus G'$ consists of edges of $U$.
 $D(G,G')$ is additive, with $D(G,G')=D(F,G')-D(F,G)$ (\lean{D\_sub}).
 So $D(G,G')(t)=2(h(G')-h(G))=0$ at the hole cell.
-Let $c$ be a square that is not a cell of $V'$.
-It has a missing corner $m$, and $D(G,G')(c)=D(G,G')(m')$ for every square $m'$ at $m$, since no
+Let $c$ be a square that is not a cell of $U$.
+It has a missing corner $m$, and $D(G,G')(c)=D(G,G')(c')$ for every square $c'$ with corner $m$, since no
 edge of $G\oplus G'$ meets $m$ (\lean{D\_aroundW}).
 Two king-adjacent missing points share a square, so $D$ is constant along a king path of missing
 points (\lean{D\_chainW}).
-If $m$ joins $t$ this way, $D(G,G')(c)$ equals the value at the hole, which is $0$.
-Otherwise $m$ escapes to a point left of $V'$, where $D$ is $0$ because $G\oplus G'$ lies in $V'$
+If $m$ joins a hole this way, $D(G,G')(c)$ equals the value at that hole, which is $0$.
+With one hole, a missing point that joins the deleted point $r$ joins a missing king neighbour of
+$r$ in the original solid set, and that point escapes.
+Otherwise $m$ escapes to a point left of $U$, where $D$ is $0$ because $G\oplus G'$ lies in $U$
 (\lean{pot\_eq\_zero\_of\_left}).
 With two holes the same argument uses both prescribed values.
 
 \subsection{Strand pairing (\cref{lem:strand})}
+\label{app:strand}
 
 Index a chained row of length $L$ from its bottom cell (index $0$) to its top cell (index $L-1$).
 Let $v_0,\dots,v_L$ and $w_0,\dots,w_L$ be its left and right corners.
@@ -2278,11 +2703,12 @@ Lowering toggles every lateral and the two end sides, and toggles each inner cro
 Afterwards the lateral $v_iv_{i+1}$ is dark exactly for even $i$.
 For each odd $i$ the left strand at height $i$ is joined to the right strand at height $i$ by
 $v_i,v_{i-1},w_{i-1},w_i$.
-So the pairing of the outer strands is unchanged except at the two ends.
+So the pairing of the outer strands is unchanged except possibly at the two ends.
 In Lean this is \lean{lowerCol\_count}, with the strip count lemmas \lean{strip\_odd\_pf} and
 \lean{strip\_even\_rel\_pf}.
 
 \subsection{The step relation of a bridge}
+\label{app:step}
 
 Before the bridge step, $E$ has dark laterals, light back and front, and is not cut
 (\lean{rowStep\_pre}, \lean{RowStep.uncut}).
@@ -2290,14 +2716,79 @@ After the flip, back and front of $E$ are dark.
 The connectivity of the old state is the new connectivity with the classes of one back corner and
 one front corner of $E$ merged, and these two classes differ in the new state
 (\lean{RowStep.split}).
-So each bridge step adds exactly one piece (Lemma~I.1, \lean{step\_count}).
+So each bridge step adds exactly one piece (\lean{step\_count}).
+
+% =====================================================================
+\section{Two runs with heights}
+\label{app:runs}
+
+\paragraph{A run of the cycle loop.}
+\Cref{fig:run72} follows the loop on a solid set of $72$ points with $d=2$, from the factor that
+\lean{findFactor} returns to a Hamiltonian cycle.
+Every panel shows a height in every cell, and the cells whose height changed in the last step.
+Two phases end with a merge, and the merging cell flipped is the first in the scan order among
+several.
+In~(c) there is no merging cell, and the critical cell has a row of odd length $3$ whose heights
+fall $3,2,1$.
+Lowering it raises these heights to $5,4,3$ and joins two cycles.
+In~(d) there is again no merging cell, and the critical cell has a row of even length $2$.
+Flipping its last cell $E$ splits a cycle, which is a bridge step, and exposes merging cells.
+In~(e) the two squares of the fixed pair of the bridge are not used.
+The reduction flips the first other merging cell and then lowers the rest of the bridge row,
+which leaves one cycle.
+No single flip in~(c) or~(d) joins two cycles.
+
+\begin{figure}[p]
+\centering
+\input{figures/fig_run72.tex}
+\caption{The cycle loop on $72$ points, with a height in every cell.
+(a), (b) Merges.
+(c) No merging cell, and an odd row of length $3$.
+(d) No merging cell, and an even row of length $2$.
+(e) After the bridge step, three cycles, the fixed pair of the bridge, and the merging cell
+flipped next.
+(f) After the merge, with the bridge still in place.
+(g) The rest of the bridge row is lowered, and one cycle remains.}
+\label{fig:run72}
+\end{figure}
+
+\paragraph{A run with a twist.}
+\Cref{fig:twistrun} follows \lean{decideHamPath} on a solid set of $34$ points whose endpoint $s$ is
+inner.
+The first leaf already succeeds.
+Its loop has the phantom of the deleted inner endpoint in the hole, so the heights are the slit
+heights of \cref{thm:slit}.
+Across a side of the slit (red) the height jumps by the arc plus $\delta$, and here $\delta=-2$.
+In~(b) the arc between $(3,2)$ and $(3,3)$ points up, yet the height drops from $4$ to $3$, and
+between the hole cells $(4,2)$ and $(4,3)$ it drops from $5$ to $2$.
+Everywhere else the height changes by exactly $1$ along each arc.
+The first phase merges.
+The second finds no merging cell, and the critical cell has a row of even length $2$.
+Flipping its last cell would split nothing, because the strand through it belongs to the path
+piece, so the phase ends with a twist, and the reduction lowers the whole row, which leaves one piece.
+
+\begin{figure}[p]
+\centering
+\input{figures/fig_twistrun.tex}
+\caption{A run of \lean{decideHamPath} with a twist, on $34$ points with $s$ inner.
+(a) The input.
+(b) The successful leaf.
+The inner endpoint $s$ is deleted, its four cells form the hole, and its neighbour on the path has
+a phantom edge into the hole.
+The other endpoint $t$ is deleted too, with a phantom edge at the top.
+The heights are slit heights.
+(c) After the merge, no merging cell, and an even row whose last cell does not split anything.
+(d) After the twist, one piece.
+(e) The Hamiltonian $s$--$t$ path.}
+\label{fig:twistrun}
+\end{figure}
 
 % =====================================================================
 \section{Sheffield's stuck case and chained rows}
 \label{app:repair}
 
 \paragraph{Sheffield's argument.}
-Sheffield proves that a stuck state $H$ with $m+r$ pieces and $r$ fixed pairs leaves every factor
+Sheffield proves that a stuck state $H$ with $m+\ell$ pieces and $\ell$ fixed pairs leaves every factor
 $H'$ with the same degrees at least $m$ pieces (his \S4.8).
 He moves fixed pairs along rows toward $H'$, until every cut component on which $D(H,H')$ is not
 constant contains a fixed-pair square.
@@ -2306,7 +2797,7 @@ join two pieces of $H$, counted as the rank of a graph on the pieces (his Lemma~
 Two steps of this argument need chained rows.
 
 \paragraph{A row stuck against a cut cell.}
-The text rules out a row that runs into a hole or the outside of $V$, because $D(H,H')=0$ there.
+Sheffield's text rules out a row that runs into a hole or the outside of $V$, because $D(H,H')=0$ there.
 It does not treat a row that runs into another cut cell $g$, as at $f=(2,3)$ in \cref{fig:sheffail}a.
 Its row $f,(2,2),(2,1),(2,0)$ (dashed) runs down into the cut cell $g=(2,-1)$ (purple), which is
 critical for a different cut, and the row of $g$ continues down to the only fixed pair (orange).
@@ -2321,7 +2812,7 @@ pair.
 Four edges of $H'$ join two pieces of $H$ (highlighted in yellow), at the two ends of $f$ and of $g$, and they join
 three pieces of $H$ into one, so the rank of Sheffield's graph is $2$.
 The bound then gives only $4-2=2$ pieces for $H'$, below the $m=3$ that the theorem asserts.
-The edges at $g$ do not join pieces of $H'$.
+The edges at $g$ give no net join of pieces of $H$.
 They reroute strands through the chained row, and the only net join is at its bottom end.
 
 \begin{figure}[ht]
@@ -2392,8 +2883,8 @@ For a path factor $d_{st}$ lowers the capacity to $1$ at $s$ and $t$, which remo
 the side of each endpoint.
 If $|V|$ is even the two sums agree only when $s$ and $t$ have different colours.
 If $|V|$ is odd they agree only when both have the colour that has one point more.
-In a leaf of the hole cases the network is built on $U$ with capacity $1$ at the two new endpoints
-$x$ and $w$, and the phantom edges $x$--$s$ and $w$--$t$ are added afterwards.
+In a leaf of the hole cases the network is built on $U$ with capacity $1$ at the current endpoint and
+at $w$, and the phantom edges from them to their phantoms are added afterwards.
 
 \paragraph{The algorithm.}
 \lean{findFactor} is the Ford--Fulkerson method on this network without building it.
@@ -2425,7 +2916,7 @@ $L$-shaped path from $s$ to $t$ together with a $4$-cycle in the upper left.
 A maximum flow only controls degrees, not connectivity, so the starting factor can have several
 pieces.
 Joining them is the work of the loop (\cref{sec:sheffield}).
-On this small block \lean{findFactor} returns a Hamiltonian path, and in \cref{fig:classsearch}a it
+On the block of (b) \lean{findFactor} itself returns a Hamiltonian path, and in \cref{fig:classsearch}a it
 returns a factor with several pieces.
 
 \begin{figure}[H]

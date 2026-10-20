@@ -155,7 +155,7 @@ def fig_bridge():
             b += edges([((0, 4), (1, 4))], "pc3")
             b += edges([((0, 4), (-0.45, 4)), ((1, 4), (1.45, 4))], "pc3,stub")
         b += pts(V)
-        for j, name in enumerate(["f_0", "f_1", "f_2", "f_3"]):
+        for j, name in enumerate(["c_0", "c_1", "c_2", "c_3"]):
             b += f"\\node[cellname] at (0.5,{j}+0.5) {{${name}$}};\n"
         if after:
             b += "\\draw[pairbox] (0.1,2.1) rectangle (0.9,3.9);\n"
@@ -1020,6 +1020,400 @@ def fig_strand():
                                       ["(a) before lowering", "(b) after lowering"], "\\qquad\\qquad"))
 
 
+# ---------------------------------------------------------------------
+# The five outcomes of one phase step (Section 4.2), each on a small factor.  Heights are drawn in
+# every cell; for the twist, which needs a path factor with a phantom in a hole, they are the slit
+# heights of Theorem 7.4.
+#
+MERGE8_V = [(0, 0), (0, 1), (0, 2), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3)]
+MERGE8_F = [(0, 0, 0), (0, 0, 1), (0, 0, 2), (0, 0, 3), (1, 0, 0), (1, 0, 2), (1, 1, 0), (1, 1, 2)]
+ODD16_V = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (2, 0), (2, 1), (2, 2),
+           (2, 3), (2, 4), (3, 0), (3, 1), (3, 2)]
+ODD16_F = [(0, 0, 0), (0, 0, 2), (0, 1, 0), (0, 1, 1), (0, 1, 3), (0, 1, 4), (0, 2, 0), (0, 2, 2),
+           (1, 0, 0), (1, 0, 1), (1, 1, 1), (1, 1, 3), (1, 2, 1), (1, 2, 3), (1, 3, 0), (1, 3, 1)]
+BRIDGE24_V = [(0, 0), (0, 1), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (2, 3), (3, 0),
+              (3, 1), (3, 2), (3, 3), (3, 4), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (5, 1), (5, 2),
+              (6, 1), (6, 2)]
+BRIDGE24_F = [(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 3), (0, 2, 0), (0, 2, 1), (0, 2, 2), (0, 2, 3),
+              (0, 3, 0), (0, 3, 1), (0, 3, 2), (0, 3, 4), (0, 5, 1), (0, 5, 2), (1, 0, 0), (1, 1, 1),
+              (1, 1, 2), (1, 2, 1), (1, 3, 3), (1, 4, 0), (1, 4, 2), (1, 4, 3), (1, 5, 1), (1, 6, 1)]
+TWIST34_V = [(0, 3), (0, 4), (1, 3), (1, 4), (2, 3), (2, 4), (3, 0), (3, 1), (3, 2), (3, 3), (3, 4),
+             (3, 5), (3, 6), (3, 7), (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7),
+             (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6), (7, 3),
+             (7, 4)]
+TWIST34_HOLE, TWIST34_Q = (5, 3), (4, 7)
+TWIST34_H = [(0, 0, 3), (0, 0, 4), (0, 1, 3), (0, 1, 4), (0, 3, 0), (0, 3, 3), (0, 3, 4), (0, 3, 5),
+             (0, 3, 6), (0, 3, 7), (0, 4, 2), (0, 4, 3), (0, 4, 4), (0, 5, 2), (0, 5, 6), (0, 6, 3),
+             (0, 6, 4), (1, 0, 3), (1, 2, 3), (1, 3, 0), (1, 3, 1), (1, 3, 2), (1, 3, 4), (1, 3, 6),
+             (1, 4, 0), (1, 4, 1), (1, 4, 5), (1, 5, 4), (1, 5, 5), (1, 6, 2), (1, 6, 4), (1, 6, 5),
+             (1, 7, 3)]
+
+
+# Heights on the cells of V, anchored at the cell `anchor`.  With a slit (vortex (a, b)), crossing
+# a horizontal side on row b left of a adds the jump delta, chosen so that every side is consistent.
+#
+def heights_at(V, H, anchor, slit=None):
+    def slit_side(c, s):
+        return ( (slit is not None) and (c[0] < slit[0]) and
+                 ( ((s == "t") and (c[1] == slit[1] - 1)) or ((s == "b") and (c[1] == slit[1])) ) )
+    def step(c, s, delta):
+        v = (1 if R.outArc(H, c, s) else -1)
+        if slit_side(c, s):
+            v += (delta if (s == "t") else -delta)
+        return v
+    cs = cells_of(V)
+    for delta in ((2, -2) if slit else (0,)):
+        tau, st = {anchor: 0}, [anchor]
+        while st:
+            c = st.pop()
+            for s in "btlr":
+                d = R.nb(c, s)
+                if (d in tau) or (not R.IsCell(V, d)):
+                    continue
+                tau[d] = tau[c] + step(c, s, delta)
+                st.append(d)
+        ok = all( (tau[R.nb(c, s)] == tau[c] + step(c, s, delta))
+                  for c in tau for s in "tr" if R.nb(c, s) in tau )
+        if ok and (len(tau) == len(cs)):
+            return tau
+    raise ValueError("no consistent height")
+
+
+def box_cells(C, style, inset):
+    xs, ys = [c[0] for c in C], [c[1] for c in C]
+    return (f"\\draw[{style}] ({min(xs)}+{inset},{min(ys)}+{inset}) rectangle "
+            f"({max(xs)}+{1 - inset:.2f},{max(ys)}+{1 - inset:.2f});\n")
+
+
+# Piece colours that follow a reference factor: each piece takes the colour of the reference piece
+# holding its least point, and a piece split off from a reference piece gets a fresh colour.
+#
+def piece_colours(W, H, ref=None):
+    comps = sorted(R.comps(W, H), key=min)
+    if ref is None:
+        return [PC[k % 4] for k in range(len(comps))]
+    rc = sorted(R.comps(W, ref), key=min)
+    used, out = set(), []
+    for C in comps:
+        k = next(i for i, D in enumerate(rc) if min(C) in D)
+        if k in used:
+            k = len(rc) + len(used)
+        used.add(k)
+        out.append(PC[k % 4])
+    return out
+
+
+def phase_panel(V, H, tau, U=None, flip=(), chg=(), row=None, cands=False, wall=None,
+                hole=None, dead=(), slit=None, ref=None, pair=None, BS=(), labels=(), scale=0.6):
+    U = V if U is None else U
+    W = frozenset(V)
+    b = ""
+    if hole:
+        b += cells(hole, "holecell")
+    b += cells(chg, "chgcell") + cells(flip, "hicell") + grid_edges(U)
+    phe = [e for e in H if (R.edge_p(e) not in U) or (R.edge_q(e) not in U)]
+    Hs = [e for e in H if e not in phe]
+    comps = sorted(R.comps(W, H), key=min)
+    for C, col in zip(comps, piece_colours(W, H, ref)):
+        b += fac_edges([e for e in Hs if R.edge_p(e) in C], col)
+    b += edges([eseg(e) for e in phe], "ph")
+    if slit:
+        b += f"\\draw[slit] ({min(x for x, _ in V)},{slit[1]}-0.13) -- ({slit[0]},{slit[1]}-0.13);\n"
+    if cands:
+        S = R.connectedPairs(W, H)
+        for c in R.cellList(U):
+            if R.Alt(H, c) and R.isCutCell(S, c) and (c not in flip) and (not R.pairSqB(BS, c)):
+                b += box_cells([c], "candbox", 0.14)
+    if pair:
+        b += box_cells(pair, "pairbox", 0.04)
+    if row:
+        q, cs = row
+        b += box_cells(cs, "rowbox", 0.09) + box_cells([q], "qbox", 0.2)
+        e = cs[-1]
+        if e != q:
+            b += f"\\draw[qarrow] ({q[0]}+0.5,{q[1]}+0.5) -- ({e[0]}+0.5,{e[1]}+0.5);\n"
+    if wall:
+        x, y = wall
+        b += f"\\draw[pcB,very thick,dashed] ({x},{y}) rectangle ({x+1},{y+1});\n"
+        b += f"\\node[lab,pcB] at ({x}+0.5,{y}+0.5) {{$\\times$}};\n"
+    b += pts_bw(U) + "".join(f"\\node[miss] at ({x},{y}) {{}};\n" for (x, y) in sorted(dead))
+    if tau is not None:
+        b += tau_labels(tau)
+    for (pt, txt, pos) in labels:
+        b += lab(pt, txt, pos)
+    return pic(b, scale)
+
+
+# A legend: a list of (kind, text) laid out in rows of at most `per` entries.
+#
+def legend_tikz(items, per=3, width=7.0, maxw=30.0):
+    out = "\\begin{tikzpicture}[scale=0.5]\n"
+    x, y = 0.0, 0.0
+    for k, (kind, text) in enumerate(items):
+        # Entries flow left to right, each as wide as its text, and wrap at maxw.
+        need = 1.6 + 0.42 * len(text.replace("$", ""))
+        if (x > 0) and (x + need > maxw):
+            x, y = 0.0, y - 1.8
+        if kind == "flip":
+            out += f"\\fill[hicell] ({x},{y}) rectangle ({x+1},{y+1});\n"
+        elif kind == "chg":
+            out += f"\\fill[chgcell] ({x},{y}) rectangle ({x+1},{y+1});\n"
+        elif kind == "cand":
+            out += f"\\draw[candbox] ({x+0.14},{y+0.14}) rectangle ({x+0.86},{y+0.86});\n"
+        elif kind == "pair":
+            out += f"\\draw[pairbox] ({x+0.04},{y+0.04}) rectangle ({x+0.96},{y+0.96});\n"
+        elif kind == "row":
+            out += (f"\\draw[rowbox] ({x+0.09},{y+0.09}) rectangle ({x+0.91},{y+0.91});"
+                    f"\\draw[qbox] ({x+0.25},{y+0.25}) rectangle ({x+0.75},{y+0.75});\n")
+        elif kind == "wall":
+            out += (f"\\draw[pcB,very thick,dashed] ({x},{y}) rectangle ({x+1},{y+1});"
+                    f"\\node[lab,pcB] at ({x+0.5},{y+0.5}) {{$\\times$}};\n")
+        elif kind == "hole":
+            out += f"\\fill[holecell] ({x},{y}) rectangle ({x+1},{y+1});\n"
+        elif kind == "slit":
+            out += f"\\draw[slit] ({x},{y+0.5}) -- ({x+1},{y+0.5});\n"
+        elif kind == "ph":
+            out += f"\\draw[ph] ({x},{y+0.5}) -- ({x+1},{y+0.5});\n"
+        elif kind == "dead":
+            out += f"\\node[miss] at ({x+0.5},{y+0.5}) {{}};\n"
+        out += f"\\node[lab,anchor=west] at ({x+1.15},{y+0.5}) {{{text}}};\n"
+        x += need + 1.2
+    return out + "\\end{tikzpicture}"
+
+
+def fig_phase():
+    panels, caps = [], []
+    # (a) merge.
+    V, F = frozenset(MERGE8_V), frozenset(MERGE8_F)
+    H, BS, out = R.runPhase(V, V, len(V) + 1, F, ())
+    assert out[0] == "merge" and not BS
+    tau = heights(V, F)
+    panels.append(phase_panel(V, F, tau, flip=[out[1]], cands=True))
+    caps.append("(a) merge")
+    # (b) stuck: the only critical cell runs into a missing square.
+    V, F = frozenset(PLUS18_V), PLUS18_H
+    H, BS, out = R.runPhase(V, V, len(V) + 1, F, ())
+    assert out[0] == "stuck"
+    q, a, r = (1, 4), "b", 4
+    panels.append(phase_panel(V, F, heights(V, F), row=(q, [R.cellJ(q, a, j) for j in range(r)]),
+                              wall=R.cellJ(q, a, r)))
+    caps.append("(b) stuck")
+    # (c) odd row.
+    V, F = frozenset(ODD16_V), frozenset(ODD16_F)
+    H, BS, out = R.runPhase(V, V, len(V) + 1, F, ())
+    assert out[0] == "odd"
+    b = out[1]
+    rc = [R.cellJ(b.q, b.a, j) for j in range(b.r)]
+    panels.append(phase_panel(V, F, heights(V, F), flip=rc, row=(b.q, rc)))
+    caps.append(f"(c) odd row, length ${b.r}$")
+    # (d), (e) bridge step: flipping the last cell E of an even row splits a piece.
+    V, F = frozenset(BRIDGE24_V), frozenset(BRIDGE24_F)
+    H, BS, out = R.runPhase(V, V, len(V) + 1, F, ())
+    assert len(BS) == 1
+    b = BS[0]
+    rc = [R.cellJ(b.q, b.a, j) for j in range(b.r)]
+    E = R.bE(b)
+    anc = next(c for c in cells_of(V) if c != E)
+    t0, t1 = heights_at(V, F, anc), heights_at(V, H, anc)
+    m = min(min(t0.values()), min(t1.values()))
+    t0 = {c: v - m for c, v in t0.items()}
+    t1 = {c: v - m for c, v in t1.items()}
+    assert R.cncomp(V, H) == R.cncomp(V, F) + 1
+    panels.append(phase_panel(V, F, t0, flip=[E], row=(b.q, rc)))
+    caps.append(f"(d) bridge step: even row, {R.cncomp(V, F)} pieces")
+    panels.append(phase_panel(V, H, t1, chg=[E], row=(b.q, rc), ref=F))
+    caps.append(f"(e) bridge step: $E$ flipped, {R.cncomp(V, H)} pieces")
+    # (f), (g) twist: a path factor with the phantom of an inner endpoint in a hole.  Flipping E
+    # splits nothing.
+    V, H = frozenset(TWIST34_V), frozenset(TWIST34_H)
+    hole_pt, qd = TWIST34_HOLE, TWIST34_Q
+    U = V - {hole_pt, qd}
+    H2, BS, out = R.runPhase(U, V, len(V) + 1, H, ())
+    assert out[0] == "twist"
+    b = out[1]
+    rc = [R.cellJ(b.q, b.a, j) for j in range(b.r)]
+    E = R.bE(b)
+    HE = R.flip(H, E)
+    assert R.cncomp(V, HE) == R.cncomp(V, H)
+    hole = [(hole_pt[0] - 1, hole_pt[1] - 1), (hole_pt[0], hole_pt[1] - 1),
+            (hole_pt[0] - 1, hole_pt[1]), hole_pt]
+    anc = next(c for c in cells_of(V) if c != E)
+    t0, t1 = heights_at(V, H, anc, hole_pt), heights_at(V, HE, anc, hole_pt)
+    m = min(min(t0.values()), min(t1.values()))
+    t0 = {c: v - m for c, v in t0.items()}
+    t1 = {c: v - m for c, v in t1.items()}
+    kw = dict(U=U, hole=hole, dead=[hole_pt, qd], slit=hole_pt, row=(b.q, rc))
+    panels.append(phase_panel(V, H, t0, flip=[E], **kw))
+    caps.append(f"(f) twist: even row, {R.cncomp(V, H)} pieces")
+    panels.append(phase_panel(V, HE, t1, chg=[E], ref=H, **kw))
+    caps.append(f"(g) twist: $E$ flipped, still {R.cncomp(V, HE)} pieces")
+    legend = legend_tikz([("flip", "flips next"), ("chg", "just flipped"),
+                          ("cand", "other merging cell"),
+                          ("row", "row from the critical cell (purple)"), ("wall", "not a cell"),
+                          ("hole", "hole cells"), ("slit", "slit"), ("ph", "phantom edge"),
+                          ("dead", "deleted point")], per=3, width=9.0)
+    write("fig_phase.tex", panel_row(panels[:3], caps[:3], "\\qquad") + "\\\\[8pt]\n" +
+          panel_row(panels[3:5], caps[3:5], "\\qquad") + "\\\\[8pt]\n" +
+          panel_row(panels[5:], caps[5:], "\\qquad") + "\\\\[10pt]\n" + legend)
+
+
+# ---------------------------------------------------------------------
+# Appendix: two runs with heights.  RUN72 is a run of the cycle loop from the factor findFactor
+# returns, with plain merges, an odd row and a bridge step.  TWIST34 is the successful leaf of
+# decideHamPath with one inner endpoint, whose loop ends with a twist; heights are slit heights.
+#
+RUN72_V = [(0, 5), (0, 6), (1, 5), (1, 6), (1, 7), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7),
+           (3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (4, 0), (4, 1), (4, 2),
+           (4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8), (4, 9), (5, 0), (5, 1), (5, 2), (5, 3),
+           (5, 4), (5, 5), (5, 6), (5, 7), (5, 8), (5, 9), (6, 0), (6, 1), (6, 2), (6, 3), (6, 4),
+           (6, 5), (6, 6), (6, 7), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5),
+           (7, 6), (7, 7), (7, 8), (7, 9), (8, 3), (8, 4), (8, 5), (8, 6), (8, 7), (9, 3), (9, 4),
+           (9, 5), (10, 3), (10, 4), (10, 5), (11, 4), (11, 5)]
+TWIST34_S, TWIST34_T = (5, 3), (4, 7)
+
+
+def mkstep(H, kind, BS=()):
+    return dict(H=H, kind=kind, flip=[], row=None, pair=None, cands=False, BS=BS, why=None)
+
+
+def rowcells(b, n=None):
+    return [R.cellJ(b.q, b.a, j) for j in range((b.r if n is None else n))]
+
+
+# The states of one loop on factors of W, with what each step flips next.
+#
+def loop_steps(U, W, G):
+    steps = [mkstep(G, "start")]
+    while R.cncomp(W, G) > 1:
+        H, BS, out = R.runPhase(U, W, len(W) + 1, G, ())
+        cur = steps[-1]
+        if out[0] in ("odd", "twist"):
+            b = out[1]
+            cur.update(flip=rowcells(b), row=(b.q, rowcells(b)), why=out[0])
+            G = R.reducePieces(U, W, H, BS, out)
+            steps.append(mkstep(G, out[0]))
+            continue
+        assert out[0] == "merge", out
+        if not BS:
+            cur.update(flip=[out[1]], cands=True, why="merge")
+            G = R.reducePieces(U, W, H, BS, out)
+            steps.append(mkstep(G, "merge"))
+            continue
+        assert len(BS) == 1
+        b = BS[0]
+        E, rc = R.bE(b), rowcells(b)
+        cur.update(flip=[E], row=(b.q, rc), why="bridge")
+        Ss = R.bridgeStatesConn(W, H, BS)
+        X = next(Y for Y in R.cellList(U) if R.isGoodMergingCell(W, H, BS, Ss, Y))
+        Hx = R.flipCol(H, X, R.altFrame(H, X), 1)
+        plan = R.undoPlan(Ss, BS, R.mergePair(H, X))
+        G = R.reducePieces(U, W, H, BS, out)
+        assert G == R.applyAll(Hx, plan)
+        pair = [R.cellJ(b.q, b.a, b.r - 2), E]
+        st = mkstep(H, "bridge", BS)
+        st.update(flip=[X], row=(b.q, rc), pair=pair, cands=True)
+        steps.append(st)
+        later = [R.cellJ(o.c, o.a, j) for o in plan for j in range(o.n)]
+        st = mkstep(Hx, "xmerge", BS)
+        st.update(flip=later, row=(b.q, rc), pair=pair)
+        steps.append(st)
+        steps.append(mkstep(G, "lowered"))
+    return steps
+
+
+def step_heights(V, steps, slit=None):
+    flipped = set()
+    for st in steps:
+        flipped |= set(st["flip"]) | (set(st["row"][1]) if st["row"] else set())
+    anc = next(c for c in cells_of(V) if c not in flipped)
+    taus = [heights_at(V, st["H"], anc, slit) for st in steps]
+    m = min(min(t.values()) for t in taus)
+    return [{c: v - m for c, v in t.items()} for t in taus]
+
+
+STEPNAME = {"start": "start", "merge": "merged", "odd": "odd row lowered", "twist": "twist",
+            "bridge": "bridge step", "xmerge": "merged", "lowered": "bridge lowered"}
+
+
+def step_caption(k, st, n, unit):
+    main = f"({'abcdefghijkl'[k]}) {STEPNAME[st['kind']]}, ${n}$ {unit}" + ("" if n == 1 else "s")
+    if st["why"] in ("odd", "twist", "bridge") and st["kind"] not in ("bridge", "xmerge"):
+        main = "\\shortstack{" + main + "\\\\ no merging cell}"
+    return main
+
+
+def fig_run72():
+    V = frozenset(RUN72_V)
+    F = R.findFactor(V, lambda z: 2)
+    steps = loop_steps(V, V, F)
+    kinds = [st["kind"] for st in steps]
+    assert kinds == ["start", "merge", "merge", "odd", "bridge", "xmerge", "lowered"], kinds
+    taus = step_heights(V, steps)
+    panels, caps = [], []
+    for k, st in enumerate(steps):
+        chg = [c for c in taus[k] if (k > 0) and (taus[k - 1][c] != taus[k][c])]
+        ref = steps[k - 1]["H"] if k > 0 else None
+        panels.append(phase_panel(V, st["H"], taus[k], flip=st["flip"], chg=chg, row=st["row"],
+                                  cands=st["cands"], pair=st["pair"], BS=st["BS"], ref=ref,
+                                  scale=0.46))
+        caps.append(step_caption(k, st, R.cncomp(V, st["H"]), "cycle"))
+    legend = legend_tikz([("flip", "flips next"), ("chg", "height just changed"),
+                          ("cand", "other merging cell"),
+                          ("row", "row from the critical cell (purple)"),
+                          ("pair", "fixed pair of the bridge")], per=3, width=9.0)
+    rows = [panel_row(panels[j:j + 3], caps[j:j + 3], "\\;") for j in range(0, len(panels), 3)]
+    write("fig_run72.tex", "\\\\[8pt]\n".join(rows) + "\\\\[10pt]\n" + legend)
+
+
+def fig_twistrun():
+    V, s, t = frozenset(TWIST34_V), TWIST34_S, TWIST34_T
+    calls = []
+    orig = R.twoPhantomLoop
+
+    def loop(U, p, q, n, G):
+        W = U | {p, q}
+        st = loop_steps(U, W, G) if (R.runPhase(U, W, len(W) + 1, G, ())[2][0] != "stuck") else None
+        r = orig(U, p, q, n, G)
+        calls.append(dict(U=U, p=p, q=q, ok=(r is not None), steps=st))
+        return r
+    R.twoPhantomLoop = loop
+    try:
+        path = R.decideHamPath(V, s, t)
+    finally:
+        R.twoPhantomLoop = orig
+    assert path is not None
+    c = [c for c in calls if c["ok"]][-1]
+    U, hole_pt, qd, steps = c["U"], c["p"], c["q"], c["steps"]
+    assert (U | {hole_pt, qd}) == V
+    assert [st["why"] for st in steps] == ["merge", "twist", None]
+    hole = [(hole_pt[0] - 1, hole_pt[1] - 1), (hole_pt[0], hole_pt[1] - 1),
+            (hole_pt[0] - 1, hole_pt[1]), hole_pt]
+    taus = step_heights(V, steps, hole_pt)
+    inner = [nm for nm, p in (("s", s), ("t", t)) if R.isInner(V, p)]
+    L0 = [(s, "$s$", "below left"), (t, "$t$", "above right")]
+    panels = [phase_panel(V, frozenset(), None, hole=hole, labels=L0, scale=0.6)]
+    caps = ["(a) input, $" + "$, $".join(inner) + "$ inner"]
+    for k, st in enumerate(steps):
+        chg = [c for c in taus[k] if (k > 0) and (taus[k - 1][c] != taus[k][c])]
+        ref = steps[k - 1]["H"] if k > 0 else None
+        panels.append(phase_panel(V, st["H"], taus[k], U=U, flip=st["flip"], chg=chg, row=st["row"],
+                                  cands=st["cands"], hole=hole, dead=[hole_pt, qd], slit=hole_pt,
+                                  ref=ref, scale=0.6))
+        cp = step_caption(k + 1, st, R.cncomp(V, st["H"]), "piece")
+        if k == 0:
+            cp = cp.replace("start", "leaf, start of the loop")
+        caps.append(cp)
+    pe = frozenset(ekey(path[j], path[j + 1]) for j in range(len(path) - 1))
+    panels.append(phase_panel(V, pe, None, hole=hole, labels=L0, scale=0.6))
+    caps.append(f"({'abcdefghijkl'[len(caps)]}) Hamiltonian $s$--$t$ path")
+    legend = legend_tikz([("flip", "flips next"), ("chg", "height just changed"),
+                          ("row", "row from the critical cell (purple)"), ("hole", "hole cells"),
+                          ("slit", "slit"), ("ph", "phantom edge"), ("dead", "deleted point")],
+                         per=4, width=7.5)
+    write("fig_twistrun.tex", panel_row(panels[:3], caps[:3], "\\quad") + "\\\\[8pt]\n" +
+          panel_row(panels[3:], caps[3:], "\\quad") + "\\\\[10pt]\n" + legend)
+
+
 if __name__ == "__main__":
     fig_solid()
     fig_factor()
@@ -1041,3 +1435,6 @@ if __name__ == "__main__":
     fig_flow()
     fig_sheffail()
     fig_strand()
+    fig_phase()
+    fig_run72()
+    fig_twistrun()

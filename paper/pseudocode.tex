@@ -20,7 +20,7 @@
 \newcommand{\pcbreak}{\textbf{break}}
 
 \paragraph{Pseudocode.}
-\proc{DecideHamPath} (\cref{alg:decideHamPath}) chooses one of three deletion walks by testing which
+\proc{DecideHamPath} (\cref{alg:decideHamPath}) chooses one of three procedures by testing which
 endpoints are inner.
 Each walk deletes endpoints until the two out-vertices are Far with phantoms that are not opposed,
 and then runs a final test.
@@ -41,8 +41,6 @@ The procedures return Booleans, and \pctrue\ means that a Hamiltonian path exist
 Every loop over a list stops at its first success, as \lean{List.any}, \lean{List.find?} and
 \lean{List.findSome?} do in Lean.
 A loop ``for $n$ rounds'' runs at most $n$ times, and $n$ is the fuel of the Lean definition.
-The Python reference implementation returns the path as a witness instead of
-\pctrue.
 
 \begin{algorithm}[htbp]
 \caption{\proc{DecideHamPath} (Lean \lean{decideHamPath})}
@@ -122,8 +120,6 @@ The fuel $12$ allows the at most $11$ deletion levels of \cref{sec:walk}.
 $\pfn{IsUsablePhantom}(V,s,q,t,p)$ (Lean \lean{isUsablePhantom}) holds when $p\notin V$, $p\ne q$, and
 the phantom $p$ of $t$ is not opposed to the phantom $q$ of $s$, so $p$ is a usable phantom.
 $\pfn{IsFar}(t,s)$ (Lean \lean{isFar}) holds when $t=s$ or $\dist(t,s)\ge2$.
-$\pfn{PhantomsOpposed}(a,m_a,b,m_b)$ (Lean \lean{phantomsOpposed}) holds when the phantoms $m_a$ of $a$ and
-$m_b$ of $b$ are opposed (\cref{def:opp}).
 
 \begin{algorithm}[htbp]
 \caption{\proc{HoleCase} (Lean \lean{holeCase}), \proc{OneHoleCase} (Lean
@@ -202,6 +198,8 @@ $r$.
 In \cref{alg:holeCaseWalk} the phantom $p_w$ of $w$ is the deleted inner point $t$.
 The phantom $q$ of $s$ is the point deleted last, and $e_{sq}$ is the edge $s$--$q$.
 The fuel $10$ allows the at most $9$ deletions of \cref{sec:one}.
+$\pfn{PhantomsOpposed}(a,m_a,b,m_b)$ (Lean \lean{phantomsOpposed}) holds when the phantoms $m_a$ of $a$ and
+$m_b$ of $b$ are opposed (\cref{def:opp}).
 
 \begin{algorithm}[htbp]
 \caption{\proc{OneHoleFinalTest} (Lean \lean{oneHoleFinalTest}) and
@@ -267,7 +265,7 @@ The factor $F$ is a two-phantom factor on $U\cup\{t,q\}$ with phantoms $t$ of $w
   \Comment{squares of the bounding box, $x$-major}
   \ForAll{$c\in\var{box}$}
     \Comment{start below every solution (\lean{kInitA})}
-    \State $\varphi(c)\gets h_i$ for the first $i$ with $a_i=c$, else $-\pfn{BoxWidth}(V)$
+    \State $\varphi(c)\gets h_i$ for the first $i$ whose hole cell $a_i$ is $c$, else $-\pfn{BoxWidth}(V)$
   \EndFor
   \State $\varphi(c)\gets0$ for every square $c\notin\var{box}$
   \For{$|\var{box}|+1$ rounds}
